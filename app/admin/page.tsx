@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 
 const CATEGORIES = [
+  'Core',
   'Vocabulary',
   'Grammar',
   'Characters',
