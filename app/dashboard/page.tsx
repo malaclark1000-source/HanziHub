@@ -82,6 +82,8 @@ export default function DashboardPage() {
 
   async function handleUpdate(deck: DownloadedDeck) {
     setUpdatingId(deck.id)
+    // Trigger download immediately in the click context — before any awaits
+    window.location.href = deck.file_url
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -91,7 +93,6 @@ export default function DashboardPage() {
         version_downloaded: deck.current_version,
         downloaded_at: new Date().toISOString(),
       }, { onConflict: 'user_id,deck_id' })
-      window.open(deck.file_url, '_blank')
       setDownloads(prev => prev.map(d =>
         d.id === deck.id ? { ...d, version_downloaded: deck.current_version } : d
       ))

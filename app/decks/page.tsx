@@ -197,6 +197,9 @@ export default function DecksPage() {
   async function handleDownload(deck: Deck) {
     if (!userId) return
     setDownloadingId(deck.id)
+    // Trigger download immediately in the click context — before any awaits
+    // so browsers don't block it as a popup
+    window.location.href = deck.file_url
     try {
       await supabase.from('user_downloads').upsert({
         user_id: userId,
@@ -205,7 +208,6 @@ export default function DecksPage() {
         downloaded_at: new Date().toISOString(),
       }, { onConflict: 'user_id,deck_id' })
       await supabase.from('decks').update({ download_count: deck.download_count + 1 }).eq('id', deck.id)
-      window.open(deck.file_url, '_blank')
       await loadDecks()
     } finally {
       setDownloadingId(null)
