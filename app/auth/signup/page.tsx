@@ -34,8 +34,7 @@ export default function SignupPage() {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess('Account created! Check your email to confirm, then sign in.')
-        setTimeout(() => router.push('/auth/login'), 3000)
+        router.push('/decks')
       }
     } finally {
       setLoading(false)

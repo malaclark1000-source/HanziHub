@@ -7,29 +7,45 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 
+const CATEGORIES = [
+  'Vocabulary',
+  'Grammar',
+  'Characters',
+  'Listening',
+  'Reading',
+  'Speaking',
+  'Tones',
+  'Culture',
+  'General',
+]
+
 function Header({ userEmail }: { userEmail: string }) {
   const router = useRouter()
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/auth/login')
   }
+  const navLinks = (mobile?: boolean) => (
+    <>
+      <Link href="/decks" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>Browse Decks</Link>
+      <Link href="/dashboard" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>My Downloads</Link>
+      <Link href="/admin" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 font-medium whitespace-nowrap' : 'text-purple-600 font-medium'}>Admin</Link>
+    </>
+  )
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/decks" className="text-xl font-bold text-slate-900">汉字 Hub</Link>
-          <nav className="hidden sm:flex gap-4 text-sm">
-            <Link href="/decks" className="text-slate-600 hover:text-slate-900">Browse Decks</Link>
-            <Link href="/dashboard" className="text-slate-600 hover:text-slate-900">My Downloads</Link>
-            <Link href="/admin" className="text-blue-600 font-medium">Admin</Link>
-          </nav>
+          <nav className="hidden sm:flex gap-4 text-sm">{navLinks()}</nav>
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:block text-sm text-slate-500">{userEmail}</span>
-          <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
-            Sign out
-          </button>
+          <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">Sign out</button>
         </div>
+      </div>
+      <div className="sm:hidden border-t border-slate-100">
+        <nav className="flex gap-1 px-4 py-2 overflow-x-auto">{navLinks(true)}</nav>
       </div>
     </header>
   )
@@ -109,9 +125,11 @@ function CreateDeckForm({ onCreated }: { onCreated: () => void }) {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-            <input value={category} onChange={e => setCategory(e.target.value)} required
-              placeholder="e.g. Vocabulary, Grammar"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <select value={category} onChange={e => setCategory(e.target.value)} required
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">-- Select a category --</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
         </div>
         <div>
@@ -227,6 +245,7 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
+  const [editCategory, setEditCategory] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -235,6 +254,7 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
     setEditingId(deck.id)
     setEditName(deck.name)
     setEditDesc(deck.description)
+    setEditCategory(deck.category)
     setError('')
   }
 
@@ -242,7 +262,7 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
     setSaving(true)
     setError('')
     try {
-      const { error: dbError } = await supabase.from('decks').update({ name: editName, description: editDesc }).eq('id', id)
+      const { error: dbError } = await supabase.from('decks').update({ name: editName, description: editDesc, category: editCategory }).eq('id', id)
       if (dbError) throw new Error(dbError.message)
       setEditingId(null)
       onRefresh()
@@ -282,6 +302,11 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
                 <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={2}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm" />
+                <select value={editCategory} onChange={e => setEditCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                  <option value="">-- Select a category --</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
                 <div className="flex gap-2">
                   <button onClick={() => saveEdit(deck.id)} disabled={saving}
                     className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors">
