@@ -35,20 +35,24 @@ function Header({ userEmail }: { userEmail: string }) {
   )
 }
 
-async function uploadToR2(file: File, onStatus: (msg: string) => void): Promise<string> {
+async function uploadToR2(file: File, deckName: string, onStatus: (msg: string) => void): Promise<string> {
   onStatus('Requesting upload URL...')
+  const contentType = file.type || 'application/octet-stream'
   const res = await fetch('/api/r2-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream' }),
+    body: JSON.stringify({ filename: file.name, contentType, deckName }),
   })
   if (!res.ok) throw new Error('Failed to get upload URL')
-  const { uploadUrl, publicUrl } = await res.json()
+  const { uploadUrl, publicUrl, contentDisposition } = await res.json()
   onStatus('Uploading file...')
   const uploadRes = await fetch(uploadUrl, {
     method: 'PUT',
     body: file,
-    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    headers: {
+      'Content-Type': contentType,
+      ...(contentDisposition ? { 'Content-Disposition': contentDisposition } : {}),
+    },
   })
   if (!uploadRes.ok) throw new Error('File upload failed')
   onStatus('Upload complete!')
@@ -72,7 +76,7 @@ function CreateDeckForm({ onCreated }: { onCreated: () => void }) {
     setError('')
     setLoading(true)
     try {
-      const fileUrl = await uploadToR2(file, setStatus)
+      const fileUrl = await uploadToR2(file, name, setStatus)
       setStatus('Creating deck record...')
       const { error: dbError } = await supabase.from('decks').insert({
         name, description, category, current_version: version, file_url: fileUrl, download_count: 0,
@@ -153,7 +157,8 @@ function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => 
     setError('')
     setLoading(true)
     try {
-      const fileUrl = await uploadToR2(file, setStatus)
+      const selectedDeck = decks.find(d => d.id === selectedId)
+      const fileUrl = await uploadToR2(file, selectedDeck?.name || '', setStatus)
       setStatus('Updating deck...')
       const { error: dbError } = await supabase.from('decks').update({
         current_version: version, file_url: fileUrl, updated_at: new Date().toISOString(),

@@ -19,7 +19,7 @@ const s3 = new S3Client({
 
 export async function POST(req: Request) {
   try {
-    const { filename, contentType } = await req.json()
+    const { filename, contentType, deckName } = await req.json()
     if (!filename || !contentType) {
       return NextResponse.json({ error: 'filename and contentType are required' }, { status: 400 })
     }
@@ -28,16 +28,24 @@ export async function POST(req: Request) {
     const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
     const key = `decks/${timestamp}-${sanitized}`
 
+    // Build a clean download filename from the deck name
+    const ext = filename.includes('.') ? filename.split('.').pop() : 'apkg'
+    const downloadFilename = deckName
+      ? `${deckName.replace(/[^a-zA-Z0-9\s_-]/g, '').trim().replace(/\s+/g, '_')}.${ext}`
+      : sanitized
+    const contentDisposition = `attachment; filename="${downloadFilename}"`
+
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,
       ContentType: contentType,
+      ContentDisposition: contentDisposition,
     })
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 })
     const publicUrl = `${R2_PUBLIC_URL}/${key}`
 
-    return NextResponse.json({ uploadUrl, publicUrl })
+    return NextResponse.json({ uploadUrl, publicUrl, contentDisposition })
   } catch (error: unknown) {
     console.error('R2 upload error:', error)
     return NextResponse.json(
