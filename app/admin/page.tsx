@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim())
-
 function Header({ userEmail }: { userEmail: string }) {
   const router = useRouter()
   async function handleLogout() {
@@ -345,8 +343,14 @@ export default function AdminPage() {
       if (!session) { router.replace('/auth/login'); return }
       const email = session.user.email || ''
       setUserEmail(email)
-      // Check admin access — if no admin emails configured, allow any logged-in user
-      if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS[0] !== '' && !ADMIN_EMAILS.includes(email)) {
+      // Check admin access via server-side API (reads ADMIN_EMAILS env var at runtime)
+      const res = await fetch('/api/check-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const { isAdmin } = await res.json()
+      if (!isAdmin) {
         setUnauthorized(true)
         setLoading(false)
         return
