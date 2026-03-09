@@ -186,6 +186,12 @@ function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => 
       await supabase.from('deck_versions').insert({
         deck_id: selectedId, version, changelog, file_url: fileUrl,
       })
+      setStatus('Sending update notifications...')
+      await fetch('/api/notify-deck-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckId: selectedId, deckName: selectedDeck?.name, version, changelog }),
+      })
       setStatus('Deck updated successfully!')
       setSelectedId(''); setVersion(''); setChangelog(''); setFile(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -236,6 +242,69 @@ function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => 
         <button type="submit" disabled={loading}
           className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors">
           {loading ? 'Updating...' : 'Update Deck'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+function SendNotificationForm({ decks }: { decks: Deck[] }) {
+  const [selectedId, setSelectedId] = useState('')
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedId) { setError('Please select a deck.'); return }
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/notify-deck-manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckId: selectedId, subject, message }),
+      })
+      const { sent } = await res.json()
+      setStatus(`Sent to ${sent} subscriber${sent !== 1 ? 's' : ''}.`)
+      setSelectedId(''); setSubject(''); setMessage('')
+      setTimeout(() => setStatus(''), 3000)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <h2 className="text-lg font-semibold text-slate-900 mb-4">Send Notification</h2>
+      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
+      {status && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">{status}</div>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Deck</label>
+          <select value={selectedId} onChange={e => setSelectedId(e.target.value)} required
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            <option value="">-- Select a deck --</option>
+            {decks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+          <input value={subject} onChange={e => setSubject(e.target.value)} required
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
+          <textarea value={message} onChange={e => setMessage(e.target.value)} required rows={4}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+        </div>
+        <button type="submit" disabled={loading}
+          className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium rounded-lg transition-colors">
+          {loading ? 'Sending...' : 'Send to Subscribers'}
         </button>
       </form>
     </div>
@@ -413,6 +482,7 @@ export default function AdminPage() {
         </div>
         <CreateDeckForm onCreated={loadDecks} />
         <UpdateDeckForm decks={decks} onUpdated={loadDecks} />
+        <SendNotificationForm decks={decks} />
         <DeckList decks={decks} onRefresh={loadDecks} />
       </main>
     </div>
