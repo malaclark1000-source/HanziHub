@@ -77,7 +77,6 @@ export default function ReportBugPage() {
     setError('')
     setLoading(true)
     try {
-      // Store in Supabase bug_reports table if it exists, otherwise just show success
       const { error: dbError } = await supabase.from('bug_reports').insert({
         deck_id: selectedDeck || null,
         description: description.trim(),
@@ -85,9 +84,14 @@ export default function ReportBugPage() {
         submitted_at: new Date().toISOString(),
       })
       if (dbError) {
-        // Table might not exist — still show success to the user
         console.warn('bug_reports table error:', dbError.message)
       }
+      const deckName = decks.find(d => d.id === selectedDeck)?.name || ''
+      await fetch('/api/report-bug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deckName, description: description.trim(), contactEmail: contactEmail.trim() }),
+      })
       setSuccess(true)
     } finally {
       setLoading(false)
