@@ -23,6 +23,7 @@ function Header({ userEmail }: { userEmail: string }) {
     <>
       <Link href="/decks" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>Browse Decks</Link>
       <Link href="/dashboard" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>My Downloads</Link>
+      <Link href="/tutorials" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>Tutorials</Link>
       <Link href="/admin" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 font-medium whitespace-nowrap' : 'text-purple-600 font-medium'}>Admin</Link>
     </>
   )
