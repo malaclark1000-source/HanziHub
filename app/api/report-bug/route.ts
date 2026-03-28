@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer'
 
 // Add or remove recipient emails here
 const BUG_REPORT_RECIPIENTS = [
-  'malaclark1000@gmail.com',
+  'malaclark1000@gmail.com','mattbing901@gmail.com'
 ]
 
 const transporter = nodemailer.createTransport({
