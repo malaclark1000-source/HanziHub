@@ -9,15 +9,8 @@ import { supabase, type Deck } from '../utils/supabase'
 
 const CATEGORIES = [
   'Core',
-  'Vocabulary',
-  'Grammar',
-  'Characters',
-  'Listening',
-  'Reading',
-  'Speaking',
-  'Tones',
-  'Culture',
-  'General',
+  'Supplementary',
+  'Collection',
 ]
 
 function Header({ userEmail }: { userEmail: string }) {

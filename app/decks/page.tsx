@@ -224,7 +224,10 @@ export default function DecksPage() {
     d.description.toLowerCase().includes(search.toLowerCase())
   )
 
-  const categories = [...new Set(decks.map(d => d.category))].sort()
+  const CATEGORY_ORDER = ['Collection', 'Core', 'Supplementary']
+  const categories = [...new Set(decks.map(d => d.category))].sort(
+    (a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b)
+  )
 
   return (
     <div className="min-h-screen bg-slate-50">
