@@ -56,28 +56,7 @@ export default function TutorialsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header userEmail={userEmail} isAdmin={isAdmin} />
-      <main className="max-w-4xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Tutorials</h1>
-        <p className="text-slate-500 mb-8">Learn how to get the most out of HanziHub and Anki.</p>
-
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Getting Started with Anki</h2>
-            <p className="text-slate-500 text-sm">Tutorial content coming soon. This will cover how to download and install Anki, import decks, and configure your study settings.</p>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">How to Download and Import a Deck</h2>
-            <p className="text-slate-500 text-sm">Tutorial content coming soon. Step-by-step instructions for finding a deck on HanziHub, downloading it, and importing it into Anki.</p>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Study Tips for Mandarin</h2>
-            <p className="text-slate-500 text-sm">Tutorial content coming soon. Best practices for using spaced repetition to learn characters, vocabulary, and tones effectively.</p>
-          </div>
-        </div>
-      </main>
+        Hello Hanzi Hub!
     </div>
   )
 }
