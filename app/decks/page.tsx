@@ -152,6 +152,13 @@ function NotificationModal({
   )
 }
 
+// Starter pack .colpkg deck id, used to update the display downloads for all other decks
+const HANZI_HUB_STARTER_PACK_ID = "0b14bd33-452d-4e1f-9fde-074325362d82"
+
+const isStarterPack = (d: Deck) => {
+  return d.id === HANZI_HUB_STARTER_PACK_ID
+}
+
 export default function DecksPage() {
   const router = useRouter()
   const [decks, setDecks] = useState<Deck[]>([])
@@ -162,10 +169,28 @@ export default function DecksPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
+  const [starterPackDownloads, setStarterPackDownloads] = useState(0)
+
+  // Used to update the number of downloads displayed for all other decks
+  // Return the adjusted download count of a deck 
+  const adjustedDownloadCount = (d: Deck) => {
+    if (isStarterPack(d)) {
+      return d.download_count
+    } else {
+      return d.download_count + starterPackDownloads
+    }
+  }
 
   const loadDecks = useCallback(async () => {
-    const { data } = await supabase.from('decks').select('*').order('name')
+    const { data } = await supabase.from('decks').select('*').order('name') as { data: Deck[] }
     setDecks(data || [])
+
+    data.forEach((d) => {
+      if (d.id === HANZI_HUB_STARTER_PACK_ID) {
+        setStarterPackDownloads(d.download_count)
+        console.log(`Found ${starterPackDownloads} downloads for hanzi hub starter pack.`)
+      }
+    })
     setLoading(false)
   }, [])
 
@@ -273,7 +298,7 @@ export default function DecksPage() {
                       </div>
                       <p className="text-sm text-slate-500 mb-4 leading-relaxed">{deck.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-400">{deck.download_count} downloads</span>
+                        <span className="text-xs text-slate-400">{adjustedDownloadCount(deck)} downloads</span>
                         <button
                           onClick={() => handleDownload(deck)}
                           disabled={downloadingId === deck.id}

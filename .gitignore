@@ -45,4 +45,6 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-env.local.download
+# Additional local development files
+bun.lockb
+justfile
