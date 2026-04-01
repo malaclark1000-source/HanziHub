@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/app/utils/supabase'
 
 export function NotificationModal({
@@ -13,6 +13,20 @@ export function NotificationModal({
     const [notifyNew, setNotifyNew] = useState(true)
     const [loading, setLoading] = useState(false)
     const [saved, setSaved] = useState(false)
+
+    // Escape key handler: exit out of the modal
+    useEffect(() => {
+        const handleEsc = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose()
+            }
+        }
+
+        window.addEventListener('keydown', handleEsc)
+        return () => {
+            window.removeEventListener('keydown', handleEsc)
+        }
+    }, [onClose]) // Re-run if onClose changes
 
     async function handleSave() {
         setLoading(true)
