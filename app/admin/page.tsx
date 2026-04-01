@@ -6,45 +6,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
+import { CATEGORIES } from '@/lib/constants'
+import { Header } from '@/components/layout/Header'
+import { NotificationModal } from '@/components/layout/NotificationModal'
 
-const CATEGORIES = [
-  'Core',
-  'Supplementary',
-  'Collection',
-]
-
-function Header({ userEmail }: { userEmail: string }) {
-  const router = useRouter()
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
-  }
-  const navLinks = (mobile?: boolean) => (
-    <>
-      <Link href="/decks" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>Browse Decks</Link>
-      <Link href="/dashboard" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>My Downloads</Link>
-      <Link href="/tutorials" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'}>Tutorials</Link>
-      <Link href="/admin" className={mobile ? 'text-sm px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 font-medium whitespace-nowrap' : 'text-purple-600 font-medium'}>Admin</Link>
-    </>
-  )
-  return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <Link href="/decks" className="text-xl font-bold text-slate-900">汉字 Hub</Link>
-          <nav className="hidden sm:flex gap-4 text-sm">{navLinks()}</nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:block text-sm text-slate-500">{userEmail}</span>
-          <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">Sign out</button>
-        </div>
-      </div>
-      <div className="sm:hidden border-t border-slate-100">
-        <nav className="flex gap-1 px-4 py-2 overflow-x-auto">{navLinks(true)}</nav>
-      </div>
-    </header>
-  )
-}
 
 async function uploadToR2(file: File, deckName: string, onStatus: (msg: string) => void): Promise<string> {
   onStatus('Requesting upload URL...')
@@ -425,6 +390,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
   const [unauthorized, setUnauthorized] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   async function loadDecks() {
     const { data } = await supabase.from('decks').select('*').order('name')
@@ -437,13 +404,16 @@ export default function AdminPage() {
       if (!session) { router.replace('/auth/login'); return }
       const email = session.user.email || ''
       setUserEmail(email)
+
       // Check admin access via server-side API (reads ADMIN_EMAILS env var at runtime)
       const res = await fetch('/api/check-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
+
       const { isAdmin } = await res.json()
+      setIsAdmin(isAdmin)
       if (!isAdmin) {
         setUnauthorized(true)
         setLoading(false)
@@ -469,7 +439,13 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header userEmail={userEmail} />
+      <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
+      {showModal && (
+        <NotificationModal
+          userEmail={userEmail}
+          onClose={() => setShowModal(false)}
+        />
+      )}
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>
