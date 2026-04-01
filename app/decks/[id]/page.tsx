@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation'
 import { supabase, type Deck } from '../../utils/supabase'
 import { useParams } from 'next/navigation'
 import ErrorPage from 'next/error'
-import React from 'react'
-
 import Link from 'next/link'
 
 function Header({ onBellClick, userEmail, isAdmin }: { onBellClick: () => void; userEmail: string; isAdmin: boolean }) {
@@ -49,13 +47,12 @@ function Header({ onBellClick, userEmail, isAdmin }: { onBellClick: () => void; 
 export default function DeckPage() {
 
   const router = useRouter()
-  // const [decks, setDecks] = useState<Deck[]>([])
   const [deck, setDeck] = useState<Deck>()
   const [loading, setLoading] = useState(true)
-  const [userEmail, setUserEmail] = useState('')
-  const [userId, setUserId] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [, setUserEmail] = useState('')
+  const [, setUserId] = useState('')
+  const [, setIsAdmin] = useState(false)
+  const [, setShowModal] = useState(false)
   const [errorStatus, setErrorStatus] = useState(200)
 
   const params = useParams()
