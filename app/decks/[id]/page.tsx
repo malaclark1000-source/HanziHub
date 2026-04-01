@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, type Deck } from '../../utils/supabase'
+import { useParams } from 'next/navigation'
 import ErrorPage from 'next/error'
 import React from 'react'
 
@@ -45,7 +46,8 @@ function Header({ onBellClick, userEmail, isAdmin }: { onBellClick: () => void; 
   )
 }
 
-export default function DeckPage({ params }) {
+export default function DeckPage() {
+
   const router = useRouter()
   // const [decks, setDecks] = useState<Deck[]>([])
   const [deck, setDeck] = useState<Deck>()
@@ -56,7 +58,8 @@ export default function DeckPage({ params }) {
   const [showModal, setShowModal] = useState(false)
   const [errorStatus, setErrorStatus] = useState(200)
 
-  const { id } = React.use(params)
+  const params = useParams()
+  const id = params.id as string
 
   const loadDeck = useCallback(async () => {
     const { data } = await supabase.from('decks').select('*').eq("id", id).single() as { data: Deck }
@@ -116,7 +119,7 @@ export default function DeckPage({ params }) {
             <div className="bg-white rounded-xl border border-slate-200 p-8">
               {/* Deck Name */}
               <h1 className="text-3xl font-bold text-slate-900 mb-4">
-                {deck.name}
+                {deck?.name}
               </h1>
 
               {/* Deck Description */}
@@ -125,7 +128,7 @@ export default function DeckPage({ params }) {
                   Description
                 </h2>
                 <p className="text-slate-600 whitespace-pre-wrap">
-                  {deck.description}
+                  {deck?.description}
                 </p>
               </div>
 
