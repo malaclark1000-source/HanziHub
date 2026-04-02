@@ -113,44 +113,60 @@ export default function DashboardPage() {
                   key={deck.id}
                   className={`bg-white rounded-xl border p-5 hover:shadow-md transition-shadow ${hasUpdate ? 'border-amber-300' : 'border-slate-200'}`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
-                    {hasUpdate ? (
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
-                        Update Available
-                      </span>
-                    ) : (
-                      <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
-                        Up to date
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 mb-1">
-                    Downloaded: v{deck.version_downloaded}
-                    {hasUpdate && <span className="text-amber-600"> → v{deck.current_version} available</span>}
-                  </p>
-                  <p className="text-sm text-slate-500 mb-4 leading-relaxed">{deck.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{deck.category}</span>
-                    {hasUpdate ? (
-                      <button
-                        onClick={() => handleUpdate(deck)}
-                        disabled={updatingId === deck.id}
-                        className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        {updatingId === deck.id ? 'Updating...' : 'Download Update'}
-                      </button>
-                    ) : (
-                      <a
-                        href={deck.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Re-download
-                      </a>
-                    )}
-                  </div>
+                  <Link
+                    key={deck.id}
+                    href={`/decks/${deck.id}`}
+                    className="block group"  // group allows hover effects on children
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
+                      {hasUpdate ? (
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
+                          Update Available
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
+                          Up to date
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 mb-1">
+                      Downloaded: v{deck.version_downloaded}
+                      {hasUpdate && <span className="text-amber-600"> → v{deck.current_version} available</span>}
+                    </p>
+                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">{deck.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-400">{deck.category}</span>
+                      {hasUpdate ? (
+                        <button
+                          onClick={() => handleUpdate(deck)}
+                          disabled={updatingId === deck.id}
+                          className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          {updatingId === deck.id ? 'Updating...' : 'Download Update'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            event?.stopPropagation()
+                            window.location.href = deck.file_url
+                          }}
+                          className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
+                        >
+                          Re-download
+                        </button>
+                        // <a
+                        //   href={deck.file_url}
+                        //   target="_blank"
+                        //   rel="noopener noreferrer"
+                        //   className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
+                        // >
+                        //   Re-download
+                        // </a>
+                      )}
+                    </div>
+
+                  </Link>
                 </div>
               )
             })}
