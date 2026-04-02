@@ -146,15 +146,15 @@ export default function DecksPage() {
                       href={`/decks/${deck.id}`}
                       className="block group"  // group allows hover effects on children
                     >
-                      <div key={deck.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+                      <div key={deck.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow h-52 flex flex-col">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
                           <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
                             v{deck.current_version}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-4 leading-relaxed">{deck.description}</p>
-                        <div className="flex items-center justify-between">
+                        <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-3">{deck.description}</p>
+                        <div className="flex items-center justify-between mt-auto">
                           <span className="text-xs text-slate-400">{adjustedDownloadCount(deck)} downloads</span>
                           <button
                             onClick={() => handleDownload(deck)}
