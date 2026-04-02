@@ -8,3 +8,5 @@ export const CATEGORIES = [
     'Collection',
 ]
 
+// UI constant
+export const DECK_CARD_HEIGHT = 52

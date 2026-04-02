@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
-import { HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
+import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
 import { isStarterPack } from '@/lib/utils'
 
 
@@ -146,7 +146,7 @@ export default function DecksPage() {
                       href={`/decks/${deck.id}`}
                       className="block group"  // group allows hover effects on children
                     >
-                      <div key={deck.id} className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow h-52 flex flex-col">
+                      <div key={deck.id} className={`bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow h-${DECK_CARD_HEIGHT} flex flex-col`}>
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
                           <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
+import { DECK_CARD_HEIGHT } from '@/lib/constants'
 
 type DownloadedDeck = Deck & { version_downloaded: string; downloaded_at: string }
 
@@ -109,14 +110,15 @@ export default function DashboardPage() {
             {downloads.map(deck => {
               const hasUpdate = deck.current_version !== deck.version_downloaded
               return (
-                <div
+
+                <Link
                   key={deck.id}
-                  className={`bg-white rounded-xl border p-5 hover:shadow-md transition-shadow ${hasUpdate ? 'border-amber-300' : 'border-slate-200'}`}
+                  href={`/decks/${deck.id}`}
+                  className="block group"  // group allows hover effects on children
                 >
-                  <Link
+                  <div
                     key={deck.id}
-                    href={`/decks/${deck.id}`}
-                    className="block group"  // group allows hover effects on children
+                    className={`bg-white rounded-xl border p-5 hover:shadow-md flex flex-col transition-shadow h-${DECK_CARD_HEIGHT} ${hasUpdate ? 'border-amber-300' : 'border-slate-200'}`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
@@ -134,8 +136,8 @@ export default function DashboardPage() {
                       Downloaded: v{deck.version_downloaded}
                       {hasUpdate && <span className="text-amber-600"> → v{deck.current_version} available</span>}
                     </p>
-                    <p className="text-sm text-slate-500 mb-4 leading-relaxed">{deck.description}</p>
-                    <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-3">{deck.description}</p>
+                    <div className="flex items-center justify-between mt-auto">
                       <span className="text-xs text-slate-400">{deck.category}</span>
                       {hasUpdate ? (
                         <button
@@ -155,19 +157,10 @@ export default function DashboardPage() {
                         >
                           Re-download
                         </button>
-                        // <a
-                        //   href={deck.file_url}
-                        //   target="_blank"
-                        //   rel="noopener noreferrer"
-                        //   className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
-                        // >
-                        //   Re-download
-                        // </a>
                       )}
                     </div>
-
-                  </Link>
-                </div>
+                  </div>
+                </Link>
               )
             })}
           </div>
