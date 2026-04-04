@@ -23,6 +23,9 @@ export default function DecksPage() {
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
+  const [hasEverDownloaded, setHasEverDownloaded] = useState(true)
+  const [showTutorialPrompt, setShowTutorialPrompt] = useState(false)
+  const [pendingDeck, setPendingDeck] = useState<Deck | null>(null)
 
   // Used to update the number of downloads displayed for all other decks
   // Return the adjusted download count of a deck 
@@ -72,12 +75,30 @@ export default function DecksPage() {
       if (!prefs?.has_responded) {
         setShowModal(true)
       }
+      const { count } = await supabase
+        .from('user_downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id)
+      setHasEverDownloaded((count ?? 0) > 0)
     }
     init()
   }, [router, loadDecks])
 
-  async function handleDownload(deck: Deck) {
+  function handleDownload(deck: Deck, e: React.MouseEvent) {
     if (!userId) return
+    if (!hasEverDownloaded) {
+      e.stopPropagation()
+      setPendingDeck(deck)
+      setShowTutorialPrompt(true)
+      return
+    }
+    proceedWithDownload(deck)
+  }
+
+  async function proceedWithDownload(deck: Deck) {
+    setShowTutorialPrompt(false)
+    setPendingDeck(null)
+    setHasEverDownloaded(true)
     setDownloadingId(deck.id)
     // Trigger download immediately in the click context — before any awaits
     // so browsers don't block it as a popup
@@ -115,6 +136,33 @@ export default function DecksPage() {
           userEmail={userEmail}
           onClose={() => setShowModal(false)}
         />
+      )}
+      {showTutorialPrompt && pendingDeck && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <h2 className="text-lg font-bold text-slate-800 mb-2">New to Anki?</h2>
+            <p className="text-sm text-slate-600 mb-1">
+              Before downloading your first deck, we recommend reading the Anki Tutorial.
+            </p>
+            <p className="text-sm text-slate-600 mb-6">
+              It covers how to import decks, configure settings, and build a daily review habit — everything you need to get real results from your study time.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => router.push('/tutorials')}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Read the Tutorial
+              </button>
+              <button
+                onClick={() => proceedWithDownload(pendingDeck)}
+                className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
+              >
+                Download Anyway
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
@@ -157,7 +205,7 @@ export default function DecksPage() {
                         <div className="flex items-center justify-between mt-auto">
                           <span className="text-xs text-slate-400">{adjustedDownloadCount(deck)} downloads</span>
                           <button
-                            onClick={() => handleDownload(deck)}
+                            onClick={(e) => handleDownload(deck, e)}
                             disabled={downloadingId === deck.id}
                             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
                           >

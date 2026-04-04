@@ -370,9 +370,6 @@ const sections = [
           </ul>
           <p className="mt-3">These three add-ons are lightweight, stable, and genuinely useful. Start here before exploring anything else. The add-on ecosystem is large and some older add-ons break after Anki updates — stick to well-reviewed, recently-updated options.</p>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-200 text-sm text-slate-500">
-          <p>This tutorial is maintained by Hanzi Hub. If something has changed in a recent Anki update or you spot an error, use the "Report a Bug" feature at the top of the page or send an email to <a href="mailto:malaclark1000@gmail.com" className="text-blue-600 hover:underline">malaclark1000@gmail.com</a>.</p>
-        </div>
       </div>
     ),
   },
@@ -445,6 +442,10 @@ export default function TutorialsPage() {
             <Accordion key={section.title} title={section.title} content={section.content} />
           ))}
         </div>
+        <p className="mt-8 text-sm text-slate-500 text-center">
+          This tutorial is maintained by Hanzi Hub. If something has changed in a recent Anki update or you spot an error, use the "Report a Bug" feature at the top of the page or send an email to{' '}
+          <a href="mailto:malaclark1000@gmail.com" className="text-blue-600 hover:underline">malaclark1000@gmail.com</a>.
+        </p>
       </main>
     </div>
   )
