@@ -2,69 +2,65 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase, type Deck } from '../../utils/supabase'
+import { useState, useEffect, Suspense } from 'react'
 import { useParams } from 'next/navigation'
 import ErrorPage from 'next/error'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
+import Link from 'next/link'
+import { useApplicationStore } from '@/providers/application-store-provider'
+import { useApplicationStoreApi } from '@/providers/application-store-provider'
+import { Deck } from '@/types/types'
 
+// Display information for a single deck
 export default function DeckPage() {
 
-  const router = useRouter()
+  // Local state
   const [deck, setDeck] = useState<Deck>()
   const [loading, setLoading] = useState(true)
-  const [userEmail, setUserEmail] = useState('')
-  const [, setUserId] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [errorStatus, setErrorStatus] = useState(200)
+
+  // Application state
+  const applicationStore = useApplicationStoreApi()
+  const { user, loadDecks, loadUser } = useApplicationStore((store) => store)
 
   const params = useParams()
   const id = params.id as string
 
-  const loadDeck = useCallback(async () => {
-    const { data } = await supabase.from('decks').select('*').eq("id", id).single() as { data: Deck }
-    if (!data) {
-      setErrorStatus(404)
-    } else {
-      setDeck(data)
-    }
-    setLoading(false)
-  }, [])
-
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.replace('/auth/login')
+
+      await loadUser()
+      await loadDecks(false)
+
+      const user = applicationStore.getState().user
+      const decks = applicationStore.getState().decks
+
+      // Retrieve the deck that a user clicked on
+      const requestedDeck = decks.find((d) => (d.id == id))
+      if (requestedDeck === undefined) {
+        setErrorStatus(404)
         return
+      } else {
+        setDeck(requestedDeck)
       }
-      setUserEmail(session.user.email || '')
-      setUserId(session.user.id)
-      const adminRes = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
-      })
-      const { isAdmin: admin } = await adminRes.json()
-      setIsAdmin(admin)
-      await loadDeck()
-      // Check if user has responded to notification prefs
-      const { data: prefs } = await supabase
-        .from('notification_prefs')
-        .select('has_responded')
-        .eq('user_id', session.user.id)
-        .single()
-      if (!prefs?.has_responded) {
-        setShowModal(true)
+
+      setLoading(false)
+
+      if (user === undefined) {
+        console.error("User not loaded")
+      } else {
+        if (!user.hasRespondedNotifications) {
+          setShowModal(true)
+        }
       }
+
     }
     init()
-  }, [router, loadDeck])
+  }, [])
 
-  if (loading) {
+  if (loading || user === undefined) {
     return <Suspense />
   } else {
 
@@ -73,10 +69,10 @@ export default function DeckPage() {
     } else {
       return (
         <div className="min-h-screen bg-slate-50">
-          <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
+          <Header onBellClick={() => setShowModal(true)} userEmail={user.userEmail} isAdmin={user.isAdmin} />
           {showModal && (
             <NotificationModal
-              userEmail={userEmail}
+              userEmail={user.userEmail}
               onClose={() => setShowModal(false)}
             />
           )}
@@ -97,15 +93,12 @@ export default function DeckPage() {
                 </p>
               </div>
 
-              {/* Optional: Back button */}
-              <div className="mt-8 pt-6 border-t border-slate-200">
-                <a
-                  href="/decks"
-                  className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-2"
-                >
-                  ← Back to all decks
-                </a>
-              </div>
+              <Link
+                href="/decks"
+                className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-2"
+              >
+                ← Back to all decks
+              </Link>
             </div>
           </main>
         </div>

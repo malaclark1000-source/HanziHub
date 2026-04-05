@@ -44,4 +44,5 @@ export type User = {
   userId: string
   userEmail: string
   isAdmin: boolean
+  hasRespondedNotifications: boolean // Use has interacted with the notifs modal
 }

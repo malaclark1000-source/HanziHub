@@ -7,5 +7,5 @@ export async function checkNotificationPrefs(userId: string) {
     .select('has_responded')
     .eq('user_id', userId)
     .single()
-  return !data?.has_responded
+  return data?.has_responded
 }

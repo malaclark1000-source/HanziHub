@@ -10,6 +10,7 @@ import { Deck, User } from '@/types/types'
 import { supabase } from '@/app/utils/supabase'
 import { useRouter } from 'next/router'
 import { checkAdminStatus } from '@/lib/admin'
+import { checkNotificationPrefs } from '@/lib/notifications'
 
 // Step 1, define a store object
 export type ApplicationState = {
@@ -47,7 +48,6 @@ export const createApplicationStore = (
       // Check if our user already exists
       const currentUser = get().user
       if (currentUser !== undefined) {
-        console.log("Returning current user")
         return
       }
 
@@ -62,7 +62,8 @@ export const createApplicationStore = (
         user: {
           userId: session.user.id,
           userEmail: session.user.email || "",
-          isAdmin: await checkAdminStatus(session.user.email)
+          isAdmin: await checkAdminStatus(session.user.email),
+          hasRespondedNotifications: await checkNotificationPrefs(session.user.id)
         }
       })
     },

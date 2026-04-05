@@ -15,18 +15,19 @@ import { useApplicationStore, useApplicationStoreApi } from '@/providers/applica
 
 
 export default function DecksPage() {
-  const router = useRouter()
+
+  // Local state
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
 
+  // Application state
   const applicationStore = useApplicationStoreApi()
   const { user, decks, loadDecks, loadUser } = useApplicationStore((store) => store)
 
-  // Used to update the number of downloads displayed for all other decks
-  // Return the adjusted download count of a deck 
+  // Any starter pack downloads should be added to individual deck downloads
   const adjustedDownloadCount = (d: Deck) => {
     if (isStarterPack(d)) {
       return d.download_count
@@ -56,7 +57,7 @@ export default function DecksPage() {
       if (user === undefined) {
         console.error("User not loaded")
       } else {
-        if (await checkNotificationPrefs(user.userId)) {
+        if (!user.hasRespondedNotifications) {
           setShowModal(true)
         }
       }
@@ -98,7 +99,7 @@ export default function DecksPage() {
   )
 
   if (user === undefined) {
-    return <Suspense></Suspense>
+    return <Suspense />
   }
 
   return (
