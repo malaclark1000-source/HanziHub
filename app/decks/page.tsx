@@ -2,23 +2,23 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
 import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
 import { isStarterPack } from '@/lib/utils'
+import { useApplicationStore, useApplicationStoreApi } from '@/providers/application-store-provider'
+import { useRouter } from 'next/navigation'
 
 
 export default function DecksPage() {
+
   const router = useRouter()
-  const [decks, setDecks] = useState<Deck[]>([])
+
+  // Local state
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
-  const [userEmail, setUserEmail] = useState('')
-  const [userId, setUserId] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
@@ -26,8 +26,11 @@ export default function DecksPage() {
   const [showTutorialPrompt, setShowTutorialPrompt] = useState(false)
   const [pendingDeck, setPendingDeck] = useState<Deck | null>(null)
 
-  // Used to update the number of downloads displayed for all other decks
-  // Return the adjusted download count of a deck 
+  // Application state
+  const applicationStore = useApplicationStoreApi()
+  const { user, decks, loadDecks, loadUser } = useApplicationStore((store) => store)
+
+  // Any starter pack downloads should be added to individual deck downloads
   const adjustedDownloadCount = (d: Deck) => {
     if (isStarterPack(d)) {
       return d.download_count
@@ -36,55 +39,41 @@ export default function DecksPage() {
     }
   }
 
-  const loadDecks = useCallback(async () => {
-    const { data } = await supabase.from('decks').select('*').order('name') as { data: Deck[] }
-    setDecks(data || [])
-
-    data.forEach((d) => {
-      if (d.id === HANZI_HUB_STARTER_PACK_ID) {
-        setStarterPackDownloads(d.download_count)
-      }
-    })
-    setLoading(false)
-  }, [])
-
   useEffect(() => {
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.replace('/auth/login')
-        return
-      }
-      setUserEmail(session.user.email || '')
-      setUserId(session.user.id)
-      const adminRes = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
+
+      await loadUser()
+      await loadDecks(false)
+
+      const user = applicationStore.getState().user
+      const decks = applicationStore.getState().decks
+
+      // Update the number of starter pack downloads
+      decks.forEach((d) => {
+        if (d.id === HANZI_HUB_STARTER_PACK_ID) {
+          setStarterPackDownloads(d.download_count)
+        }
       })
-      const { isAdmin: admin } = await adminRes.json()
-      setIsAdmin(admin)
-      await loadDecks()
-      // Check if user has responded to notification prefs
-      const { data: prefs } = await supabase
-        .from('notification_prefs')
-        .select('has_responded')
-        .eq('user_id', session.user.id)
-        .single()
-      if (!prefs?.has_responded) {
-        setShowModal(true)
+
+      setLoading(false)
+
+      if (user === undefined) {
+        console.error("User not loaded")
+      } else {
+        if (!user.hasRespondedNotifications) {
+          setShowModal(true)
+        }
+        const { count } = await supabase
+          .from('user_downloads')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.userId)
+        setHasEverDownloaded((count ?? 0) > 0)
       }
-      const { count } = await supabase
-        .from('user_downloads')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id)
-      setHasEverDownloaded((count ?? 0) > 0)
     }
     init()
-  }, [router, loadDecks])
+  }, [])
 
   function handleDownload(deck: Deck, e: React.MouseEvent) {
-    if (!userId) return
     if (!hasEverDownloaded) {
       e.stopPropagation()
       setPendingDeck(deck)
@@ -98,19 +87,21 @@ export default function DecksPage() {
     setShowTutorialPrompt(false)
     setPendingDeck(null)
     setHasEverDownloaded(true)
+
+    if (!user) return
     setDownloadingId(deck.id)
     // Trigger download immediately in the click context — before any awaits
     // so browsers don't block it as a popup
     window.location.href = deck.file_url
     try {
       await supabase.from('user_downloads').upsert({
-        user_id: userId,
+        user_id: user.userId,
         deck_id: deck.id,
         version_downloaded: deck.current_version,
         downloaded_at: new Date().toISOString(),
       }, { onConflict: 'user_id,deck_id' })
       await supabase.from('decks').update({ download_count: deck.download_count + 1 }).eq('id', deck.id)
-      await loadDecks()
+      await loadDecks(true)
     } finally {
       setDownloadingId(null)
     }
@@ -127,12 +118,16 @@ export default function DecksPage() {
     (a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b)
   )
 
+  if (user === undefined) {
+    return <Suspense />
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
+      <Header onBellClick={() => setShowModal(true)} userEmail={user.userEmail} isAdmin={user.isAdmin} />
       {showModal && (
         <NotificationModal
-          userEmail={userEmail}
+          userEmail={user.userEmail}
           onClose={() => setShowModal(false)}
         />
       )}
