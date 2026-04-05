@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { ApplicationStoreProvider } from '@/providers/application-store-provider'
 
 export const metadata: Metadata = {
   title: 'Hanzi Hub',
@@ -14,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-slate-50 min-h-screen">
-        {children}
+        <ApplicationStoreProvider>{children}</ApplicationStoreProvider>
       </body>
     </html>
   )
