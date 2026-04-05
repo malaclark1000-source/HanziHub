@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation'
 import ErrorPage from 'next/error'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useApplicationStore } from '@/providers/application-store-provider'
 import { useApplicationStoreApi } from '@/providers/application-store-provider'
 import { Deck } from '@/types/types'
@@ -16,6 +16,11 @@ import remarkGfm from 'remark-gfm';
 
 // Display information for a single deck
 export default function DeckPage() {
+
+  // Next.js routing stuff
+  const router = useRouter()
+  const params = useParams()
+  const id = params.id as string
 
   // Local state
   const [deck, setDeck] = useState<Deck>()
@@ -27,8 +32,6 @@ export default function DeckPage() {
   const applicationStore = useApplicationStoreApi()
   const { user, loadDecks, loadUser } = useApplicationStore((store) => store)
 
-  const params = useParams()
-  const id = params.id as string
 
   useEffect(() => {
     async function init() {
@@ -92,20 +95,18 @@ export default function DeckPage() {
                 </h2>
                 <div className="list-decimal prose prose-slate-600">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {(() => {
-                      console.log('Raw markdown content:', deck?.description);
-                      return deck?.description || '';
-                    })()}
+                    {deck?.description || 'No description'}
                   </ReactMarkdown>
                 </div>
               </div>
-
-              <Link
-                href="/decks"
-                className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-2"
-              >
-                ← Back to all decks
-              </Link>
+              <div className="mt-8 pt-6 border-t border-slate-200">
+                <button
+                  onClick={() => router.back()}
+                  className="text-blue-600 hover:text-blue-700 inline-flex items-center gap-2"
+                >
+                  ← Back to previous page
+                </button>
+              </div>
             </div>
           </main >
         </div >
