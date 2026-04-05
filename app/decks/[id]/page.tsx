@@ -11,6 +11,8 @@ import Link from 'next/link'
 import { useApplicationStore } from '@/providers/application-store-provider'
 import { useApplicationStoreApi } from '@/providers/application-store-provider'
 import { Deck } from '@/types/types'
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Display information for a single deck
 export default function DeckPage() {
@@ -88,9 +90,14 @@ export default function DeckPage() {
                 <h2 className="text-xl font-semibold text-slate-900 mb-2">
                   Description
                 </h2>
-                <p className="text-slate-600 whitespace-pre-wrap">
-                  {deck?.description}
-                </p>
+                <div className="list-decimal prose prose-slate-600">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {(() => {
+                      console.log('Raw markdown content:', deck?.description);
+                      return deck?.description || '';
+                    })()}
+                  </ReactMarkdown>
+                </div>
               </div>
 
               <Link
@@ -100,8 +107,8 @@ export default function DeckPage() {
                 ← Back to all decks
               </Link>
             </div>
-          </main>
-        </div>
+          </main >
+        </div >
       )
     }
   }
