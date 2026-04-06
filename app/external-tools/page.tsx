@@ -5,7 +5,9 @@
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
 import { useState } from 'react';
-import Link from 'next/link';
+import { useApplicationStore } from '@/providers/application-store-provider'
+import { useEffect } from 'react';
+import { Suspense } from 'react';
 
 
 
@@ -24,8 +26,16 @@ const tools: Tool[] = [
     name: "Rapid Fire Audio",
     description: "DLI Student-built application for practicing listening comprehension",
     url: "https://rapid-fire-audio2.netlify.app",
-    category: "Practice",
+    category: "Listening",
     icon: "⚡🎧"
+  },
+  {
+    id: 'duchinese',
+    name: 'Du Chinese',
+    description: "Awesome Chinese reading app",
+    url: 'https://duchinese.net/',
+    category: "Reading",
+    icon: '📚'
   },
   {
     id: 'pleco',
@@ -49,31 +59,7 @@ const tools: Tool[] = [
     description: 'Comprehensive grammar reference organized by level (A1-C1)',
     url: 'https://resources.allsetlearning.com/chinese/grammar/',
     category: 'Reference',
-    icon: '📚',
-  },
-  {
-    id: 'dongchinese',
-    name: 'Dong Chinese',
-    description: 'Learn Chinese through context with character etymology and example sentences',
-    url: 'https://www.dong-chinese.com/',
-    category: 'Learning',
-    icon: '🎯',
-  },
-  {
-    id: 'lineDict',
-    name: 'LINE Dict',
-    description: 'Chinese-English dictionary with example sentences and stroke order',
-    url: 'https://dict.naver.com/linedict/zhendict/#/cnen/home',
-    category: 'Dictionary',
-    icon: '🔍',
-  },
-  {
-    id: 'hackingchinese',
-    name: 'Hacking Chinese',
-    description: 'Articles and resources about effective Chinese learning strategies',
-    url: 'https://www.hackingchinese.com/',
-    category: 'Blog',
-    icon: '✍️',
+    icon: '📝',
   },
   {
     id: 'chinesepod',
@@ -99,6 +85,22 @@ export default function ToolsPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
+  // Application state
+  const { user, loadUser } = useApplicationStore((store) => store)
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    async function init() {
+      await loadUser()
+    }
+    init()
+  }, [])
+
+  if (user === undefined) {
+    return <Suspense />
+  }
+
+
   const filteredTools = tools.filter(tool => {
     const matchesSearch = tool.name.toLowerCase().includes(search.toLowerCase()) ||
       tool.description.toLowerCase().includes(search.toLowerCase());
@@ -108,6 +110,13 @@ export default function ToolsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Header onBellClick={() => setShowModal(true)} userEmail={user.userEmail} isAdmin={user.isAdmin} />
+      {showModal && (
+        <NotificationModal
+          userEmail={user.userEmail}
+          onClose={() => setShowModal(false)}
+        />
+      )}
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
