@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import ErrorPage from 'next/error'
-import { Header } from '@/components/layout/Header'
 import { useApplicationStore } from '@/providers/application-store-provider'
 import { useApplicationStoreApi } from '@/providers/application-store-provider'
 import { Deck } from '@/types/types'
@@ -26,7 +25,7 @@ export default function DeckPage() {
 
   // Application state
   const applicationStore = useApplicationStoreApi()
-  const { user, loadDecks } = useApplicationStore((store) => store)
+  const loadDecks = useApplicationStore((store) => store.loadDecks)
 
 
   useEffect(() => {
@@ -49,16 +48,9 @@ export default function DeckPage() {
 
   if (errorStatus != 200) {
     return <ErrorPage statusCode={errorStatus} />
-  } else if (user === undefined) {
+  } else {
     return (
       <div className="min-h-screen bg-slate-50">
-        <Header />
-      </div>
-    )
-  } {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="bg-white rounded-xl border border-slate-200 p-8">
             {/* Deck Name */}
