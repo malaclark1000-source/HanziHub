@@ -23,6 +23,7 @@ export type ApplicationState = {
 export type ApplicationActions = {
   loadDecks: (forceReload: boolean) => Promise<void>
   loadUser: () => Promise<void>
+  resetUser: () => void
 }
 
 export type ApplicationStore = ApplicationState & ApplicationActions
@@ -41,6 +42,11 @@ export const createApplicationStore = (
 ) => {
   return createStore<ApplicationStore>()((set, get) => ({
     ...initState,
+
+    resetUser: async () => {
+      console.log("Resetting user!")
+      set({ user: undefined })
+    },
 
     // User authentification
     loadUser: async () => {

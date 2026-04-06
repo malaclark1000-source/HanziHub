@@ -2,11 +2,17 @@ import { supabase } from '../../app/utils/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { NavBar } from './NavBar';
+import { useApplicationStore } from '@/providers/application-store-provider';
 
 export function Header({ onBellClick, userEmail, isAdmin }: { onBellClick: () => void; userEmail: string; isAdmin: boolean }) {
+
     const router = useRouter()
+    const resetUser = useApplicationStore((store) => store.resetUser)
+
     async function handleLogout() {
         await supabase.auth.signOut()
+        // Wipe our user from the zustand store
+        resetUser()
         router.push('/auth/login')
     }
     const navLinks = (mobile?: boolean) => (
