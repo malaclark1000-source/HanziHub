@@ -1,3 +1,4 @@
+'use client'
 // Zustand store for managing deck state.
 //
 // Built following https://zustand.docs.pmnd.rs/learn/guides/nextjs as a guide.
@@ -8,7 +9,7 @@
 import { createStore } from 'zustand/vanilla'
 import { Deck, User } from '@/types/types'
 import { supabase } from '@/app/utils/supabase'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { checkAdminStatus } from '@/lib/admin'
 import { checkNotificationPrefs } from '@/lib/notifications'
 
@@ -22,7 +23,7 @@ export type ApplicationState = {
 
 export type ApplicationActions = {
   loadDecks: (forceReload: boolean) => Promise<void>
-  loadUser: () => Promise<void>
+  loadUser: (router: ReturnType<typeof useRouter>) => Promise<void>
   resetUser: () => void
 }
 
@@ -49,7 +50,7 @@ export const createApplicationStore = (
     },
 
     // User authentification
-    loadUser: async () => {
+    loadUser: async (router) => {
 
       // Check if our user already exists
       const currentUser = get().user
@@ -57,21 +58,27 @@ export const createApplicationStore = (
         return
       }
 
-      // TODO: add try/catch to supabase auth
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        useRouter().replace('/auth/login')
-        return
-      }
-
-      set({
-        user: {
-          userId: session.user.id,
-          userEmail: session.user.email || "",
-          isAdmin: await checkAdminStatus(session.user.email),
-          hasRespondedNotifications: await checkNotificationPrefs(session.user.id)
+      // Try and connect to supabase
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          router.push('/auth/login')
+          return
         }
-      })
+
+        set({
+          user: {
+            userId: session.user.id,
+            userEmail: session.user.email || "",
+            isAdmin: await checkAdminStatus(session.user.email),
+            hasRespondedNotifications: await checkNotificationPrefs(session.user.id)
+          }
+        })
+      } catch (error) {
+        console.log("Caught supabase error.")
+        console.log(JSON.stringify(router))
+        router.push('/auth/login')
+      }
     },
 
     // Retrieve a list of decks from our database

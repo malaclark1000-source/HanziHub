@@ -3,12 +3,8 @@
 // Landing page for external tools that are useful for Chinese language students.
 
 import { Header } from '@/components/layout/Header'
-import { NotificationModal } from '@/components/layout/NotificationModal'
+import { useApplicationStore } from '@/providers/application-store-provider';
 import { useState } from 'react';
-import { useApplicationStore } from '@/providers/application-store-provider'
-import { useEffect } from 'react';
-import { Suspense } from 'react';
-
 
 
 interface Tool {
@@ -82,24 +78,10 @@ const tools: Tool[] = [
 const categories = [...new Set(tools.map(t => t.category))];
 
 export default function ToolsPage() {
+
+
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-
-  // Application state
-  const { user, loadUser } = useApplicationStore((store) => store)
-  const [showModal, setShowModal] = useState(false)
-
-  useEffect(() => {
-    async function init() {
-      await loadUser()
-    }
-    init()
-  }, [])
-
-  if (user === undefined) {
-    return <Suspense />
-  }
-
 
   const filteredTools = tools.filter(tool => {
     const matchesSearch = tool.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -110,13 +92,6 @@ export default function ToolsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={user.userEmail} isAdmin={user.isAdmin} />
-      {showModal && (
-        <NotificationModal
-          userEmail={user.userEmail}
-          onClose={() => setShowModal(false)}
-        />
-      )}
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">

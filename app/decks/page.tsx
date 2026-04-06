@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, Suspense } from 'react'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { Header } from '@/components/layout/Header'
-import { NotificationModal } from '@/components/layout/NotificationModal'
 import { NewUserModal } from '@/components/layout/NewUserModal'
 import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
 import { isStarterPack } from '@/lib/utils'
@@ -20,7 +19,7 @@ export default function DecksPage() {
   // Local state
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
-  const [showModal, setShowModal] = useState(false)
+  const [, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
   const [hasEverDownloaded, setHasEverDownloaded] = useState(true)
@@ -43,13 +42,17 @@ export default function DecksPage() {
   useEffect(() => {
     async function init() {
 
-      await loadUser()
-      await loadDecks(false)
-
+      // User authentication
+      await loadUser(router)
       const user = applicationStore.getState().user
-      const decks = applicationStore.getState().decks
+      if (user === undefined) {
+        console.log("User not authenticated, redirecting")
+        return
+      }
 
-      // Update the number of starter pack downloads
+      // Load decks, update number of starter pack downloads
+      await loadDecks(false)
+      const decks = applicationStore.getState().decks
       decks.forEach((d) => {
         if (d.id === HANZI_HUB_STARTER_PACK_ID) {
           setStarterPackDownloads(d.download_count)
@@ -58,21 +61,14 @@ export default function DecksPage() {
 
       setLoading(false)
 
-      if (user === undefined) {
-        console.error("User not loaded")
-      } else {
-        if (!user.hasRespondedNotifications) {
-          setShowModal(true)
-        }
-        const { count } = await supabase
-          .from('user_downloads')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.userId)
-        setHasEverDownloaded((count ?? 0) > 0)
-      }
+      const { count } = await supabase
+        .from('user_downloads')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.userId)
+      setHasEverDownloaded((count ?? 0) > 0)
     }
     init()
-  }, [])
+  }, [router])
 
   function handleDownload(deck: Deck, e: React.MouseEvent) {
     if (!hasEverDownloaded) {
@@ -125,13 +121,6 @@ export default function DecksPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={user.userEmail} isAdmin={user.isAdmin} />
-      {showModal && (
-        <NotificationModal
-          userEmail={user.userEmail}
-          onClose={() => setShowModal(false)}
-        />
-      )}
       {showTutorialPrompt && pendingDeck && (
         <NewUserModal
           onClick={() => proceedWithDownload(pendingDeck)}

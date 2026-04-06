@@ -6,8 +6,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '@/app/utils/supabase'
-import { Header } from '@/components/layout/Header'
-import { NotificationModal } from '@/components/layout/NotificationModal'
 import { DECK_CARD_HEIGHT } from '@/lib/constants'
 
 type DownloadedDeck = Deck & { version_downloaded: string; downloaded_at: string }
@@ -19,7 +17,6 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -84,13 +81,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
-      {showModal && (
-        <NotificationModal
-          userEmail={userEmail}
-          onClose={() => setShowModal(false)}
-        />
-      )}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 mb-1">My Downloads</h1>

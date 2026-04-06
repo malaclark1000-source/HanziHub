@@ -7,8 +7,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 import { CATEGORIES } from '@/lib/constants'
-import { Header } from '@/components/layout/Header'
-import { NotificationModal } from '@/components/layout/NotificationModal'
 
 
 async function uploadToR2(file: File, deckName: string, onStatus: (msg: string) => void): Promise<string> {
@@ -439,13 +437,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
-      {showModal && (
-        <NotificationModal
-          userEmail={userEmail}
-          onClose={() => setShowModal(false)}
-        />
-      )}
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>

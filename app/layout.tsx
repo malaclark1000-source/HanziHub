@@ -1,6 +1,7 @@
-import type { Metadata } from 'next'
 import './globals.css'
 import { ApplicationStoreProvider } from '@/providers/application-store-provider'
+import ClientLayout from './ClientLayout'
+import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Hanzi Hub',
@@ -12,10 +13,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+
+
   return (
     <html lang="en">
       <body className="antialiased bg-slate-50 min-h-screen">
-        <ApplicationStoreProvider>{children}</ApplicationStoreProvider>
+        <ApplicationStoreProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </ApplicationStoreProvider>
       </body>
     </html>
   )

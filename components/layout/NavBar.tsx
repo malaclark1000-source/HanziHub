@@ -42,11 +42,7 @@ function HeaderLink({ linkRoute, linkName, isCurrentPage, isMobile }: { linkRout
 
 
 // List of main navigation links to other pages
-export function NavBar(isAdmin: boolean, isMobile: boolean | undefined) {
-
-    // Deduce which page the user is currently visiting.
-    const pathName = usePathname()
-    const currentPage = pathName.split('/').at(1)
+export function NavBar(currentPage: string, isAdmin: boolean, isMobile: boolean | undefined) {
 
     return <>
         {NAV_LINKS.map(linkTuple => (

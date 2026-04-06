@@ -399,41 +399,9 @@ function Accordion({ title, content }: { title: string; content: React.ReactNode
 }
 
 export default function TutorialsPage() {
-  const router = useRouter()
-  const [userEmail, setUserEmail] = useState('')
-  const [userId, setUserId] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-
-  useEffect(() => {
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.replace('/auth/login')
-        return
-      }
-      setUserEmail(session.user.email || '')
-      setUserId(session.user.id)
-      const adminRes = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
-      })
-      const { isAdmin: admin } = await adminRes.json()
-      setIsAdmin(admin)
-    }
-    init()
-  }, [router])
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header onBellClick={() => setShowModal(true)} userEmail={userEmail} isAdmin={isAdmin} />
-      {showModal && (
-        <NotificationModal
-          userEmail={userEmail}
-          onClose={() => setShowModal(false)}
-        />
-      )}
       <main className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">Anki Tutorial</h1>
         <p className="text-slate-500 mb-8">A complete guide for DLI Mandarin students. Click any section to expand it.</p>
