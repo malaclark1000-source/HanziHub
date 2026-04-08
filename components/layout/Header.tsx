@@ -21,7 +21,6 @@ export function Header() {
     useEffect(() => {
         async function init() {
             await loadUser(router)
-
         }
         init()
     }, [])
@@ -36,7 +35,7 @@ export function Header() {
 
     if (user) {
         // Show notication modal if a user hasn't set their preferences
-        if (!user.hasRespondedNotifications) {
+        if (!user.hasRespondedNotifications && !showModal) {
             setShowModal(true)
         }
 
@@ -71,7 +70,10 @@ export function Header() {
                     showModal && (
                         <NotificationModal
                             userEmail={user.userEmail}
-                            onClose={() => setShowModal(false)}
+                            onClose={() => {
+                                setShowModal(false)
+                                user.hasRespondedNotifications = true
+                            }}
                         />
                     )
                 }

@@ -71,7 +71,7 @@ export const createApplicationStore = (
             userId: session.user.id,
             userEmail: session.user.email || "",
             isAdmin: await checkAdminStatus(session.user.email),
-            hasRespondedNotifications: await checkNotificationPrefs(session.user.id)
+            hasRespondedNotifications: await checkNotificationPrefs(session.user.id) || false
           }
         })
       } catch (error) {

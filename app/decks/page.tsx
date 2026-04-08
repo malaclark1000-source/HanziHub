@@ -4,7 +4,6 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { supabase, type Deck } from '@/app/utils/supabase'
-import { Header } from '@/components/layout/Header'
 import { NewUserModal } from '@/components/layout/NewUserModal'
 import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
 import { isStarterPack } from '@/lib/utils'
@@ -19,7 +18,6 @@ export default function DecksPage() {
   // Local state
   const [loading, setLoading] = useState(true)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
-  const [, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
   const [hasEverDownloaded, setHasEverDownloaded] = useState(true)
