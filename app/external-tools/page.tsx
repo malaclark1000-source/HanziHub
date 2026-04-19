@@ -26,6 +26,14 @@ const tools: Tool[] = [
     icon: "⚡🎧"
   },
   {
+    id: 'presentation-playlist',
+    name: "Presentation Playlist",
+    description: "DLI Student-build application for listening to every Presentation",
+    url: "https://presentation-playlist.netlify.app/",
+    category: "Listening",
+    icon: "⚡🎧"
+  },
+  {
     id: 'duchinese',
     name: 'Du Chinese',
     description: "Awesome Chinese reading app",
