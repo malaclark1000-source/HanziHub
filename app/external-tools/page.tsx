@@ -34,6 +34,30 @@ const tools: Tool[] = [
     icon: "⚡🎧"
   },
   {
+    id: 'migaku',
+    name: 'Migaku',
+    description: "Comprehensive Chinese learning companion that can generate subtitles and flashcards from your consumed content. Augmented by AI and highly recommend by successful DLI students, this app/browser extension can boost your chinese learning.",
+    url: "https://migaku.com/learn-chinese",
+    category: "Learning",
+    icon: "〽️"
+  },
+  {
+    id: 'number-practice',
+    name: "Number Practice",
+    description: "Processing numbers in a foreign language is surprisingly hard. Train your ear with this website's rapid fire drills",
+    url: "https://langpractice.com/mandarin-china/numbers/listening#1,0,10",
+    category: "Listening",
+    icon: "🔢"
+  },
+  {
+    id: 'pinyin-practice',
+    name: "Pinyin Practice",
+    description: "Practice pinyin and tones with simple drills",
+    url: "https://www.archchinese.com/mandarin_chinese_tone_drill.html",
+    category: "Listening",
+    icon: "拼音"
+  },
+  {
     id: 'duchinese',
     name: 'Du Chinese',
     description: "Awesome Chinese reading app",
