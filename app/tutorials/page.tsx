@@ -2,11 +2,8 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '../utils/supabase'
-import { Header } from '@/components/layout/Header'
-import { NotificationModal } from '@/components/layout/NotificationModal'
+import { YouTubeEmbed } from '@next/third-parties/google'
+import { useState } from 'react'
 
 const sections = [
   {
@@ -405,7 +402,32 @@ export default function TutorialsPage() {
       <main className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">Anki Tutorial</h1>
         <p className="text-slate-500 mb-8">A complete guide for DLI Mandarin students. Click any section to expand it.</p>
+
+        {/* --- NEW VIDEO SECTION --- */}
+        <div className="mb-10 space-y-6">
+          {/* Direct embed video */}
+          <div>
+            <h2 className="text-xl font-semibold text-slate-700 mb-3">Introduction to Anki</h2>
+            <div className="aspect-video rounded-lg overflow-hidden shadow-md">
+              <YouTubeEmbed videoid="wF6UrwQ_uns" height={400} />
+            </div>
+          </div>
+
+          {/* Second video inside accordion */}
+          <Accordion
+            title="🎥 Advanced Video Tutorial"
+            content={
+              <div className="aspect-video rounded-lg overflow-hidden">
+                <YouTubeEmbed videoid="l1v1TqRTUUE" height={400} />
+              </div>
+            }
+          />
+        </div>
+
+
         <div className="space-y-3">
+
+          <h2 className="text-xl font-semibold text-slate-700 mb-3">Article tutorials</h2>
           {sections.map((section) => (
             <Accordion key={section.title} title={section.title} content={section.content} />
           ))}
