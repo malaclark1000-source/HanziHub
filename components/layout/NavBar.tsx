@@ -12,12 +12,13 @@ const mkLinkTuple = (linkRoute: string, linkName: string) => {
     }
 }
 
+// This decides the actual order of links in our heaader.
 const NAV_LINKS = [
     mkLinkTuple("decks", "Browse Decks"),
+    mkLinkTuple("external-tools", "External Tools"),
     mkLinkTuple("dashboard", "My Downloads"),
     mkLinkTuple("tutorials", "Tutorials"),
-    mkLinkTuple("report-bug", "Report Bug"),
-    mkLinkTuple("external-tools", "External Tools")
+    mkLinkTuple("report-bug", "Report Bug")
 ]
 
 
