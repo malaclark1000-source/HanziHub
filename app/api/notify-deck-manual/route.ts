@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { createClient } from '@supabase/supabase-js'
+import { getVerifiedAdminEmail } from '@/lib/serverAuth'
+import { createSupabaseServiceClient } from '@/lib/supabaseAdmin'
+import { escapeHtml, sanitizeHeaderValue } from '@/lib/html'
+import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -11,12 +14,19 @@ const transporter = nodemailer.createTransport({
 })
 
 export async function POST(req: Request) {
-  const { deckId, subject, message } = await req.json()
+  const admin = await getVerifiedAdminEmail(req)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  if (isRateLimited(`notify-manual:${getClientIp(req)}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
+  const { deckId, subject, message } = await req.json()
+  if (!deckId || !subject || !message) {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  const supabase = createSupabaseServiceClient()
 
   const { data: downloads } = await supabase
     .from('user_downloads')
@@ -39,15 +49,18 @@ export async function POST(req: Request) {
   const TEST_EMAIL = process.env.TEST_EMAIL
   const emails = TEST_EMAIL ? [TEST_EMAIL] : [...new Set(prefs.map(p => p.email).filter(Boolean))]
 
+  const safeSubject = sanitizeHeaderValue(subject)
+  const safeMessage = escapeHtml(message)
+
   await Promise.all(
     emails.map(email =>
       transporter.sendMail({
         from: `HanziHub <${process.env.GMAIL_USER}>`,
         to: email,
-        subject,
+        subject: safeSubject,
         html: `
           <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1e293b;">
-            <p style="color: #475569; white-space: pre-line;">${message}</p>
+            <p style="color: #475569; white-space: pre-line;">${safeMessage}</p>
           </div>
         `,
       })

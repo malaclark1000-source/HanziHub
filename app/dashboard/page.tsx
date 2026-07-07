@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { DECK_CARD_HEIGHT } from '@/lib/constants'
+import { checkAdminStatus } from '@/lib/admin'
 
 type DownloadedDeck = Deck & { version_downloaded: string; downloaded_at: string }
 
@@ -26,13 +27,7 @@ export default function DashboardPage() {
         return
       }
       setUserEmail(session.user.email || '')
-      const adminRes = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
-      })
-      const { isAdmin: admin } = await adminRes.json()
-      setIsAdmin(admin)
+      setIsAdmin(await checkAdminStatus(session.access_token))
       // Get user's downloads joined with deck info
       const { data: userDownloads } = await supabase
         .from('user_downloads')

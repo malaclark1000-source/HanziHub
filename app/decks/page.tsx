@@ -95,7 +95,10 @@ export default function DecksPage() {
         version_downloaded: deck.current_version,
         downloaded_at: new Date().toISOString(),
       }, { onConflict: 'user_id,deck_id' })
-      await supabase.from('decks').update({ download_count: deck.download_count + 1 }).eq('id', deck.id)
+      // Uses a Postgres function (not a raw table update) so a client can only
+      // ever atomically +1 this counter — never overwrite it to an arbitrary
+      // value or touch any other column on the deck.
+      await supabase.rpc('increment_deck_download_count', { deck_id: deck.id })
       await loadDecks(true)
     } finally {
       setDownloadingId(null)

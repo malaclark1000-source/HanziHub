@@ -70,7 +70,7 @@ export const createApplicationStore = (
           user: {
             userId: session.user.id,
             userEmail: session.user.email || "",
-            isAdmin: await checkAdminStatus(session.user.email),
+            isAdmin: await checkAdminStatus(session.access_token),
             hasRespondedNotifications: await checkNotificationPrefs(session.user.id) || false
           }
         })

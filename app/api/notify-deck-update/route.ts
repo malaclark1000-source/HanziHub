@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { createClient } from '@supabase/supabase-js'
+import { getVerifiedAdminEmail } from '@/lib/serverAuth'
+import { createSupabaseServiceClient } from '@/lib/supabaseAdmin'
+import { escapeHtml, sanitizeHeaderValue } from '@/lib/html'
+import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -11,12 +14,19 @@ const transporter = nodemailer.createTransport({
 })
 
 export async function POST(req: Request) {
-  const { deckId, deckName, version, changelog } = await req.json()
+  const admin = await getVerifiedAdminEmail(req)
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  if (isRateLimited(`notify-update:${getClientIp(req)}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
+  const { deckId, deckName, version, changelog } = await req.json()
+  if (!deckId || !deckName || !version) {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  const supabase = createSupabaseServiceClient()
 
   // Find all users who have downloaded this deck
   const { data: downloads } = await supabase
@@ -42,18 +52,22 @@ export async function POST(req: Request) {
   const emails = TEST_EMAIL ? [TEST_EMAIL] : [...new Set(prefs.map(p => p.email).filter(Boolean))]
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://hanzihub.com'
+  const safeDeckName = escapeHtml(deckName)
+  const safeVersion = escapeHtml(version)
+  const safeSubject = sanitizeHeaderValue(`${deckName} has been updated to v${version}`)
+  const safeChangelog = changelog ? escapeHtml(changelog).replace(/\n/g, '<br>') : ''
 
   await Promise.all(
     emails.map(email =>
       transporter.sendMail({
         from: `HanziHub <${process.env.GMAIL_USER}>`,
         to: email,
-        subject: `${deckName} has been updated to v${version}`,
+        subject: safeSubject,
         html: `
           <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1e293b;">
-            <h2 style="margin-bottom: 8px;">Deck Updated: ${deckName}</h2>
-            <p style="color: #475569; margin-top: 0;">A deck you downloaded has been updated to <strong>v${version}</strong>.</p>
-            ${changelog ? `<p style="color: #475569;"><strong>What's new:</strong><br>${changelog.replace(/\n/g, '<br>')}</p>` : ''}
+            <h2 style="margin-bottom: 8px;">Deck Updated: ${safeDeckName}</h2>
+            <p style="color: #475569; margin-top: 0;">A deck you downloaded has been updated to <strong>v${safeVersion}</strong>.</p>
+            ${safeChangelog ? `<p style="color: #475569;"><strong>What's new:</strong><br>${safeChangelog}</p>` : ''}
             <a href="${siteUrl}/dashboard" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 500;">Download Update</a>
           </div>
         `,

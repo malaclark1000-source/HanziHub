@@ -7,14 +7,15 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 import { CATEGORIES } from '@/lib/constants'
+import { checkAdminStatus } from '@/lib/admin'
 
 
-async function uploadToR2(file: File, deckName: string, onStatus: (msg: string) => void): Promise<string> {
+async function uploadToR2(file: File, deckName: string, accessToken: string, onStatus: (msg: string) => void): Promise<string> {
   onStatus('Requesting upload URL...')
   const contentType = file.type || 'application/octet-stream'
   const res = await fetch('/api/r2-upload', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ filename: file.name, contentType, deckName }),
   })
   if (!res.ok) throw new Error('Failed to get upload URL')
@@ -33,7 +34,7 @@ async function uploadToR2(file: File, deckName: string, onStatus: (msg: string) 
   return publicUrl
 }
 
-function CreateDeckForm({ onCreated }: { onCreated: () => void }) {
+function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCreated: () => void }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
@@ -50,12 +51,15 @@ function CreateDeckForm({ onCreated }: { onCreated: () => void }) {
     setError('')
     setLoading(true)
     try {
-      const fileUrl = await uploadToR2(file, name, setStatus)
+      const fileUrl = await uploadToR2(file, name, accessToken, setStatus)
       setStatus('Creating deck record...')
-      const { error: dbError } = await supabase.from('decks').insert({
-        name, description, category, current_version: version, file_url: fileUrl, download_count: 0,
+      const res = await fetch('/api/admin/decks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ name, description, category, version, fileUrl }),
       })
-      if (dbError) throw new Error(dbError.message)
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Failed to create deck')
       setStatus('Deck created successfully!')
       setName(''); setDescription(''); setCategory(''); setVersion('1.0'); setFile(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -116,7 +120,7 @@ function CreateDeckForm({ onCreated }: { onCreated: () => void }) {
   )
 }
 
-function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => void }) {
+function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; accessToken: string; onUpdated: () => void }) {
   const [selectedId, setSelectedId] = useState('')
   const [version, setVersion] = useState('')
   const [changelog, setChangelog] = useState('')
@@ -134,19 +138,19 @@ function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => 
     setLoading(true)
     try {
       const selectedDeck = decks.find(d => d.id === selectedId)
-      const fileUrl = await uploadToR2(file, selectedDeck?.name || '', setStatus)
+      const fileUrl = await uploadToR2(file, selectedDeck?.name || '', accessToken, setStatus)
       setStatus('Updating deck...')
-      const { error: dbError } = await supabase.from('decks').update({
-        current_version: version, file_url: fileUrl, updated_at: new Date().toISOString(),
-      }).eq('id', selectedId)
-      if (dbError) throw new Error(dbError.message)
-      await supabase.from('deck_versions').insert({
-        deck_id: selectedId, version, changelog, file_url: fileUrl,
+      const versionRes = await fetch('/api/admin/decks/version', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ id: selectedId, version, fileUrl, changelog }),
       })
+      const versionBody = await versionRes.json()
+      if (!versionRes.ok) throw new Error(versionBody.error || 'Failed to update deck')
       setStatus('Sending update notifications...')
       await fetch('/api/notify-deck-update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ deckId: selectedId, deckName: selectedDeck?.name, version, changelog }),
       })
       setStatus('Deck updated successfully!')
@@ -205,7 +209,7 @@ function UpdateDeckForm({ decks, onUpdated }: { decks: Deck[]; onUpdated: () => 
   )
 }
 
-function SendNotificationForm({ decks }: { decks: Deck[] }) {
+function SendNotificationForm({ decks, accessToken }: { decks: Deck[]; accessToken: string }) {
   const [selectedId, setSelectedId] = useState('')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
@@ -221,7 +225,7 @@ function SendNotificationForm({ decks }: { decks: Deck[] }) {
     try {
       const res = await fetch('/api/notify-deck-manual', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ deckId: selectedId, subject, message }),
       })
       const { sent } = await res.json()
@@ -268,7 +272,7 @@ function SendNotificationForm({ decks }: { decks: Deck[] }) {
   )
 }
 
-function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }) {
+function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToken: string; onRefresh: () => void }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editDesc, setEditDesc] = useState('')
@@ -289,8 +293,13 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
     setSaving(true)
     setError('')
     try {
-      const { error: dbError } = await supabase.from('decks').update({ name: editName, description: editDesc, category: editCategory }).eq('id', id)
-      if (dbError) throw new Error(dbError.message)
+      const res = await fetch('/api/admin/decks', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ id, name: editName, description: editDesc, category: editCategory }),
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Save failed')
       setEditingId(null)
       onRefresh()
     } catch (err: unknown) {
@@ -304,10 +313,13 @@ function DeckList({ decks, onRefresh }: { decks: Deck[]; onRefresh: () => void }
     setDeletingId(id)
     setError('')
     try {
-      await supabase.from('user_downloads').delete().eq('deck_id', id)
-      await supabase.from('deck_versions').delete().eq('deck_id', id)
-      const { error: dbError } = await supabase.from('decks').delete().eq('id', id)
-      if (dbError) throw new Error(dbError.message)
+      const res = await fetch('/api/admin/decks', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ id }),
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error || 'Delete failed')
       onRefresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Delete failed')
@@ -390,6 +402,7 @@ export default function AdminPage() {
   const [unauthorized, setUnauthorized] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [accessToken, setAccessToken] = useState('')
 
   async function loadDecks() {
     const { data } = await supabase.from('decks').select('*').order('name')
@@ -400,19 +413,14 @@ export default function AdminPage() {
     async function init() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.replace('/auth/login'); return }
-      const email = session.user.email || ''
-      setUserEmail(email)
+      setUserEmail(session.user.email || '')
+      setAccessToken(session.access_token)
 
-      // Check admin access via server-side API (reads ADMIN_EMAILS env var at runtime)
-      const res = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
-
-      const { isAdmin } = await res.json()
-      setIsAdmin(isAdmin)
-      if (!isAdmin) {
+      // Admin access is verified server-side from the session token itself
+      // (never from a client-supplied email) — see /api/check-admin.
+      const admin = await checkAdminStatus(session.access_token)
+      setIsAdmin(admin)
+      if (!admin) {
         setUnauthorized(true)
         setLoading(false)
         return
@@ -441,10 +449,10 @@ export default function AdminPage() {
         <div className="mb-2">
           <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>
         </div>
-        <CreateDeckForm onCreated={loadDecks} />
-        <UpdateDeckForm decks={decks} onUpdated={loadDecks} />
-        <SendNotificationForm decks={decks} />
-        <DeckList decks={decks} onRefresh={loadDecks} />
+        <CreateDeckForm accessToken={accessToken} onCreated={loadDecks} />
+        <UpdateDeckForm decks={decks} accessToken={accessToken} onUpdated={loadDecks} />
+        <SendNotificationForm decks={decks} accessToken={accessToken} />
+        <DeckList decks={decks} accessToken={accessToken} onRefresh={loadDecks} />
       </main>
     </div>
   )

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { supabase } from '../utils/supabase'
 import { Header } from '@/components/layout/Header'
 import { NotificationModal } from '@/components/layout/NotificationModal'
+import { checkAdminStatus } from '@/lib/admin'
 
 
 export default function ReportBugPage() {
@@ -22,6 +23,7 @@ export default function ReportBugPage() {
   const [userEmail, setUserEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [accessToken, setAccessToken] = useState('')
 
   useEffect(() => {
     async function init() {
@@ -29,13 +31,8 @@ export default function ReportBugPage() {
       if (!session) { router.replace('/auth/login'); return }
       setUserEmail(session.user.email || '')
       setContactEmail(session.user.email || '')
-      const adminRes = await fetch('/api/check-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email }),
-      })
-      const { isAdmin: admin } = await adminRes.json()
-      setIsAdmin(admin)
+      setAccessToken(session.access_token)
+      setIsAdmin(await checkAdminStatus(session.access_token))
       const { data } = await supabase.from('decks').select('id, name').order('name')
       setDecks(data || [])
     }
@@ -60,7 +57,7 @@ export default function ReportBugPage() {
       const deckName = decks.find(d => d.id === selectedDeck)?.name || ''
       await fetch('/api/report-bug', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ deckName, description: description.trim(), contactEmail: contactEmail.trim() }),
       })
       setSuccess(true)

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
+import { getVerifiedAdminEmail } from '@/lib/serverAuth'
 
-// Server-side only — never exposed to the client bundle
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase())
-
+// Admin status is derived from the caller's verified Supabase session token,
+// never from a client-supplied email — otherwise anyone could pass any
+// admin's email in the request body and be told "isAdmin: true".
 export async function POST(req: Request) {
-  const { email } = await req.json()
-  if (!email) return NextResponse.json({ isAdmin: false })
-  const isAdmin = ADMIN_EMAILS.length > 0 && ADMIN_EMAILS[0] !== '' && ADMIN_EMAILS.includes(email.toLowerCase())
-  return NextResponse.json({ isAdmin })
+  const email = await getVerifiedAdminEmail(req)
+  return NextResponse.json({ isAdmin: !!email })
 }
