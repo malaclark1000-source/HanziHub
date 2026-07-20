@@ -106,8 +106,8 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deck File (.apkg)</label>
-            <input ref={fileRef} type="file" accept=".apkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
+            <label className="block text-sm font-medium text-slate-700 mb-1">Deck File (.apkg, .colpkg)</label>
+            <input ref={fileRef} type="file" accept=".apkg,.colpkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
           </div>
         </div>
@@ -189,8 +189,8 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">New File (.apkg)</label>
-            <input ref={fileRef} type="file" accept=".apkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
+            <label className="block text-sm font-medium text-slate-700 mb-1">New File (.apkg, .colpkg)</label>
+            <input ref={fileRef} type="file" accept=".apkg,.colpkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
           </div>
         </div>

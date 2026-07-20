@@ -4,9 +4,10 @@ import { NextResponse } from 'next/server'
 import { getVerifiedAdminEmail } from '@/lib/serverAuth'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
 
-// Only real Anki deck file types are allowed — this prevents someone from
-// uploading e.g. an HTML/SVG file that gets served back from the public
-// bucket and executes in a browser (stored XSS via the CDN).
+// Only real Anki deck file types are allowed (.apkg/.colpkg are zip archives)
+// — this prevents someone from uploading e.g. an HTML/SVG file that gets
+// served back from the public bucket and executes in a browser (stored XSS
+// via the CDN).
 const ALLOWED_CONTENT_TYPES = new Set([
   'application/octet-stream',
   'application/zip',
