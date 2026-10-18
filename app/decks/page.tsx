@@ -2,11 +2,11 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase, type Deck } from '@/app/utils/supabase'
 import { NewUserModal } from '@/components/layout/NewUserModal'
 import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID } from '@/lib/constants'
-import { isStarterPack } from '@/lib/utils'
+import { isStarterPack, hasSeenTutorialPrompt, markTutorialPromptSeen } from '@/lib/utils'
 import { useApplicationStore, useApplicationStoreApi } from '@/providers/application-store-provider'
 import { useRouter } from 'next/navigation'
 
@@ -20,13 +20,12 @@ export default function DecksPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [starterPackDownloads, setStarterPackDownloads] = useState(0)
-  const [hasEverDownloaded, setHasEverDownloaded] = useState(true)
   const [showTutorialPrompt, setShowTutorialPrompt] = useState(false)
   const [pendingDeck, setPendingDeck] = useState<Deck | null>(null)
 
   // Application state
   const applicationStore = useApplicationStoreApi()
-  const { user, decks, loadDecks, loadUser } = useApplicationStore((store) => store)
+  const { decks, loadDecks } = useApplicationStore((store) => store)
 
   // Any starter pack downloads should be added to individual deck downloads
   const adjustedDownloadCount = (d: Deck) => {
@@ -40,14 +39,6 @@ export default function DecksPage() {
   useEffect(() => {
     async function init() {
 
-      // User authentication
-      await loadUser(router)
-      const user = applicationStore.getState().user
-      if (user === undefined) {
-        console.log("User not authenticated, redirecting")
-        return
-      }
-
       // Load decks, update number of starter pack downloads
       await loadDecks(false)
       const decks = applicationStore.getState().decks
@@ -58,19 +49,13 @@ export default function DecksPage() {
       })
 
       setLoading(false)
-
-      const { count } = await supabase
-        .from('user_downloads')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.userId)
-      setHasEverDownloaded((count ?? 0) > 0)
     }
     init()
   }, [router])
 
-  function handleDownload(deck: Deck, e: React.MouseEvent) {
-    if (!hasEverDownloaded) {
-      e.stopPropagation()
+  // First-time visitors are pointed at the Anki tutorial before their first download
+  function handleDownload(deck: Deck) {
+    if (!hasSeenTutorialPrompt()) {
       setPendingDeck(deck)
       setShowTutorialPrompt(true)
       return
@@ -81,20 +66,13 @@ export default function DecksPage() {
   async function proceedWithDownload(deck: Deck) {
     setShowTutorialPrompt(false)
     setPendingDeck(null)
-    setHasEverDownloaded(true)
+    markTutorialPromptSeen()
 
-    if (!user) return
     setDownloadingId(deck.id)
     // Trigger download immediately in the click context — before any awaits
     // so browsers don't block it as a popup
     window.location.href = deck.file_url
     try {
-      await supabase.from('user_downloads').upsert({
-        user_id: user.userId,
-        deck_id: deck.id,
-        version_downloaded: deck.current_version,
-        downloaded_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,deck_id' })
       // Uses a Postgres function (not a raw table update) so a client can only
       // ever atomically +1 this counter — never overwrite it to an arbitrary
       // value or touch any other column on the deck.
@@ -115,10 +93,6 @@ export default function DecksPage() {
   const categories = [...new Set(decks.map(d => d.category))].sort(
     (a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b)
   )
-
-  if (user === undefined) {
-    return <Suspense />
-  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -169,7 +143,7 @@ export default function DecksPage() {
                         <div className="flex items-center justify-between mt-auto">
                           <span className="text-xs text-slate-400">{adjustedDownloadCount(deck)} downloads</span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDownload(deck, e); }}
+                            onClick={(e) => { e.stopPropagation(); handleDownload(deck); }}
                             disabled={downloadingId === deck.id}
                             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
                           >

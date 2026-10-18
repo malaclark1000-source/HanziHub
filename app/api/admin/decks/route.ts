@@ -45,6 +45,8 @@ export async function DELETE(req: Request) {
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const supabase = createSupabaseServiceClient()
+  // Legacy table from when the site had user accounts. Rows may still
+  // reference the deck, so clear them until the table is dropped.
   await supabase.from('user_downloads').delete().eq('deck_id', id)
   await supabase.from('deck_versions').delete().eq('deck_id', id)
   const { error } = await supabase.from('decks').delete().eq('id', id)

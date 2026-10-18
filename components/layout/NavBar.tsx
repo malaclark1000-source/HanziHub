@@ -2,7 +2,6 @@
 //
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation';
 
 // Helper function to build our list of navigation links
 const mkLinkTuple = (linkRoute: string, linkName: string) => {
@@ -16,9 +15,7 @@ const mkLinkTuple = (linkRoute: string, linkName: string) => {
 const NAV_LINKS = [
     mkLinkTuple("decks", "Browse Decks"),
     mkLinkTuple("external-tools", "External Tools"),
-    mkLinkTuple("dashboard", "My Downloads"),
     mkLinkTuple("tutorials", "Tutorials"),
-    mkLinkTuple("report-bug", "Report Bug")
 ]
 
 

@@ -2,8 +2,6 @@
 
 // Landing page for external tools that are useful for Chinese language students.
 
-import { Header } from '@/components/layout/Header'
-import { useApplicationStore } from '@/providers/application-store-provider';
 import { useState } from 'react';
 
 

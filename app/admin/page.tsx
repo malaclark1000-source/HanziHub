@@ -3,11 +3,11 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, type Deck } from '../utils/supabase'
 import { CATEGORIES } from '@/lib/constants'
-import { checkAdminStatus } from '@/lib/admin'
+import { useAdminSession } from '@/lib/useAdminSession'
+import { AdminSignIn } from '@/components/admin/AdminSignIn'
 
 
 async function uploadToR2(file: File, deckName: string, accessToken: string, onStatus: (msg: string) => void): Promise<string> {
@@ -147,12 +147,6 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
       })
       const versionBody = await versionRes.json()
       if (!versionRes.ok) throw new Error(versionBody.error || 'Failed to update deck')
-      setStatus('Sending update notifications...')
-      await fetch('/api/notify-deck-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ deckId: selectedId, deckName: selectedDeck?.name, version, changelog }),
-      })
       setStatus('Deck updated successfully!')
       setSelectedId(''); setVersion(''); setChangelog(''); setFile(null)
       if (fileRef.current) fileRef.current.value = ''
@@ -203,69 +197,6 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
         <button type="submit" disabled={loading}
           className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors">
           {loading ? 'Updating...' : 'Update Deck'}
-        </button>
-      </form>
-    </div>
-  )
-}
-
-function SendNotificationForm({ decks, accessToken }: { decks: Deck[]; accessToken: string }) {
-  const [selectedId, setSelectedId] = useState('')
-  const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
-  const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selectedId) { setError('Please select a deck.'); return }
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/notify-deck-manual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ deckId: selectedId, subject, message }),
-      })
-      const { sent } = await res.json()
-      setStatus(`Sent to ${sent} subscriber${sent !== 1 ? 's' : ''}.`)
-      setSelectedId(''); setSubject(''); setMessage('')
-      setTimeout(() => setStatus(''), 3000)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Send Notification</h2>
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
-      {status && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">{status}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Deck</label>
-          <select value={selectedId} onChange={e => setSelectedId(e.target.value)} required
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-            <option value="">-- Select a deck --</option>
-            {decks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-          <input value={subject} onChange={e => setSubject(e.target.value)} required
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-          <textarea value={message} onChange={e => setMessage(e.target.value)} required rows={4}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-        </div>
-        <button type="submit" disabled={loading}
-          className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-medium rounded-lg transition-colors">
-          {loading ? 'Sending...' : 'Send to Subscribers'}
         </button>
       </form>
     </div>
@@ -394,51 +325,41 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
   )
 }
 
-export default function AdminPage() {
-  const router = useRouter()
-  const [decks, setDecks] = useState<Deck[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userEmail, setUserEmail] = useState('')
-  const [unauthorized, setUnauthorized] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [accessToken, setAccessToken] = useState('')
+async function fetchDecks(): Promise<Deck[]> {
+  const { data } = await supabase.from('decks').select('*').order('name')
+  return data || []
+}
 
-  async function loadDecks() {
-    const { data } = await supabase.from('decks').select('*').order('name')
-    setDecks(data || [])
-  }
+export default function AdminPage() {
+  const { session, accessToken, isAdmin } = useAdminSession()
+  const [decks, setDecks] = useState<Deck[]>([])
+
+  const loadDecks = () => fetchDecks().then(setDecks)
 
   useEffect(() => {
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.replace('/auth/login'); return }
-      setUserEmail(session.user.email || '')
-      setAccessToken(session.access_token)
+    if (isAdmin) fetchDecks().then(setDecks)
+  }, [isAdmin])
 
-      // Admin access is verified server-side from the session token itself
-      // (never from a client-supplied email) — see /api/check-admin.
-      const admin = await checkAdminStatus(session.access_token)
-      setIsAdmin(admin)
-      if (!admin) {
-        setUnauthorized(true)
-        setLoading(false)
-        return
-      }
-      await loadDecks()
-      setLoading(false)
-    }
-    init()
-  }, [router])
+  if (session === null) return <AdminSignIn />
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading...</div>
+  if (!accessToken || isAdmin === null) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading...</div>
 
-  if (unauthorized) return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+  const signOutButton = (
+    <button onClick={() => supabase.auth.signOut()}
+      className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+      Sign out
+    </button>
+  )
+
+  if (!isAdmin) return (
+    <div className="flex justify-center px-4 py-16">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h1>
         <p className="text-slate-500 mb-4">You don&apos;t have permission to access the admin panel.</p>
-        <Link href="/decks" className="text-blue-600 hover:text-blue-700 font-medium">Back to Decks</Link>
+        <div className="flex items-center justify-center gap-3">
+          <Link href="/decks" className="text-blue-600 hover:text-blue-700 font-medium">Back to Decks</Link>
+          {signOutButton}
+        </div>
       </div>
     </div>
   )
@@ -446,12 +367,12 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        <div className="mb-2">
+        <div className="mb-2 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>
+          {signOutButton}
         </div>
         <CreateDeckForm accessToken={accessToken} onCreated={loadDecks} />
         <UpdateDeckForm decks={decks} accessToken={accessToken} onUpdated={loadDecks} />
-        <SendNotificationForm decks={decks} accessToken={accessToken} />
         <DeckList decks={decks} accessToken={accessToken} onRefresh={loadDecks} />
       </main>
     </div>

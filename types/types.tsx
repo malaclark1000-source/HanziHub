@@ -1,4 +1,4 @@
-// Global types 
+// Global types
 //
 
 // Supabase Database types
@@ -21,28 +21,4 @@ export type DeckVersion = {
   changelog: string
   file_url: string
   created_at: string
-}
-
-export type UserDownload = {
-  user_id: string
-  deck_id: string
-  version_downloaded: string
-  downloaded_at: string
-}
-
-export type NotificationPref = {
-  user_id: string
-  email: string
-  notify_updates: boolean
-  notify_new_decks: boolean
-  has_responded: boolean
-  updated_at: string
-}
-
-// Application defined types
-export type User = {
-  userId: string
-  userEmail: string
-  isAdmin: boolean
-  hasRespondedNotifications: boolean // Use has interacted with the notifs modal
 }
