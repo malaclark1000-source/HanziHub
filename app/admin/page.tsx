@@ -18,7 +18,10 @@ async function uploadToR2(file: File, deckName: string, accessToken: string, onS
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({ filename: file.name, contentType, deckName }),
   })
-  if (!res.ok) throw new Error('Failed to get upload URL')
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({ error: undefined }))
+    throw new Error(`Failed to get upload URL (${res.status}${error ? `: ${error}` : ''})`)
+  }
   const { uploadUrl, publicUrl, contentDisposition } = await res.json()
   onStatus('Uploading file...')
   const uploadRes = await fetch(uploadUrl, {
