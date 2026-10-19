@@ -12,27 +12,23 @@ import { AdminSignIn } from '@/components/admin/AdminSignIn'
 
 async function uploadToR2(file: File, deckName: string, accessToken: string, onStatus: (msg: string) => void): Promise<string> {
   onStatus('Requesting upload URL...')
-  const contentType = file.type || 'application/octet-stream'
   const res = await fetch('/api/r2-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ filename: file.name, contentType, deckName }),
+    body: JSON.stringify({ filename: file.name, deckName }),
   })
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: undefined }))
     throw new Error(`Failed to get upload URL (${res.status}${error ? `: ${error}` : ''})`)
   }
-  const { uploadUrl, publicUrl, contentDisposition } = await res.json()
+  const { uploadUrl, publicUrl, contentType, contentDisposition } = await res.json()
   onStatus('Uploading file...')
   const uploadRes = await fetch(uploadUrl, {
     method: 'PUT',
     body: file,
-    headers: {
-      'Content-Type': contentType,
-      ...(contentDisposition ? { 'Content-Disposition': contentDisposition } : {}),
-    },
+    headers: { 'Content-Type': contentType, 'Content-Disposition': contentDisposition },
   })
-  if (!uploadRes.ok) throw new Error('File upload failed')
+  if (!uploadRes.ok) throw new Error(`File upload failed (${uploadRes.status})`)
   onStatus('Upload complete!')
   return publicUrl
 }
