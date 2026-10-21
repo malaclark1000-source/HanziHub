@@ -1,0 +1,168 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { supabase, type Deck, type DeckType } from '@/app/utils/supabase'
+import { NewUserModal } from '@/components/layout/NewUserModal'
+import { DECK_CARD_HEIGHT, HANZI_HUB_STARTER_PACK_ID, deckTypeInfo } from '@/lib/constants'
+import { isStarterPack, hasSeenTutorialPrompt, markTutorialPromptSeen } from '@/lib/utils'
+import { useApplicationStore, useApplicationStoreApi } from '@/providers/application-store-provider'
+import { useRouter } from 'next/navigation'
+
+
+// Searchable, category-grouped list of every deck of one type (Anki or Pleco)
+export function DeckBrowser({ deckType }: { deckType: DeckType }) {
+
+  const router = useRouter()
+  const isAnki = deckType === 'anki'
+
+  // Local state
+  const [loading, setLoading] = useState(true)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [starterPackDownloads, setStarterPackDownloads] = useState(0)
+  const [showTutorialPrompt, setShowTutorialPrompt] = useState(false)
+  const [pendingDeck, setPendingDeck] = useState<Deck | null>(null)
+
+  // Application state
+  const applicationStore = useApplicationStoreApi()
+  const { decks: allDecks, loadDecks } = useApplicationStore((store) => store)
+  const decks = allDecks.filter(d => deckTypeInfo(d.deck_type).value === deckType)
+
+  // Any starter pack downloads should be added to individual deck downloads.
+  // The starter pack is an Anki collection, so Pleco decks don't get them.
+  const adjustedDownloadCount = (d: Deck) => {
+    if (!isAnki || isStarterPack(d)) {
+      return d.download_count
+    } else {
+      return d.download_count + starterPackDownloads
+    }
+  }
+
+  useEffect(() => {
+    async function init() {
+
+      // Load decks, update number of starter pack downloads
+      await loadDecks(false)
+      const decks = applicationStore.getState().decks
+      decks.forEach((d) => {
+        if (d.id === HANZI_HUB_STARTER_PACK_ID) {
+          setStarterPackDownloads(d.download_count)
+        }
+      })
+
+      setLoading(false)
+    }
+    init()
+  }, [router])
+
+  // First-time visitors are pointed at the Anki tutorial before their first Anki download
+  function handleDownload(deck: Deck) {
+    if (isAnki && !hasSeenTutorialPrompt()) {
+      setPendingDeck(deck)
+      setShowTutorialPrompt(true)
+      return
+    }
+    proceedWithDownload(deck)
+  }
+
+  async function proceedWithDownload(deck: Deck) {
+    setShowTutorialPrompt(false)
+    setPendingDeck(null)
+    if (isAnki) markTutorialPromptSeen()
+
+    setDownloadingId(deck.id)
+    // Trigger download immediately in the click context — before any awaits
+    // so browsers don't block it as a popup
+    window.location.href = deck.file_url
+    try {
+      // Uses a Postgres function (not a raw table update) so a client can only
+      // ever atomically +1 this counter — never overwrite it to an arbitrary
+      // value or touch any other column on the deck.
+      await supabase.rpc('increment_deck_download_count', { deck_id: deck.id })
+      await loadDecks(true)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const filtered = decks.filter(d =>
+    d.name.toLowerCase().includes(search.toLowerCase()) ||
+    d.category.toLowerCase().includes(search.toLowerCase()) ||
+    d.description.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const CATEGORY_ORDER = ['Collection', 'Core', 'Supplementary']
+  const categories = [...new Set(decks.map(d => d.category))].sort(
+    (a, b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b)
+  )
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {showTutorialPrompt && pendingDeck && (
+        <NewUserModal
+          onClick={() => proceedWithDownload(pendingDeck)}
+          onClose={() => setShowTutorialPrompt(false)}
+        />
+      )}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">{deckTypeInfo(deckType).label} Decks</h1>
+          <p className="text-slate-500 text-sm">
+            {isAnki ? 'Browse and download Mandarin study decks' : 'Browse and download Mandarin flashcard lists to import into Pleco'}
+          </p>
+        </div>
+        <div className="mb-6">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search decks..."
+            className="w-full sm:w-80 px-4 py-2 border border-slate-300 rounded-lg text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {loading ? (
+          <div className="text-center py-16 text-slate-500">Loading decks...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-slate-500">No decks found.</div>
+        ) : (
+          <div className="space-y-8">
+            {categories.filter(cat => filtered.some(d => d.category === cat)).map(category => (
+              <div key={category}>
+                <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">{category}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filtered.filter(d => d.category === category).map(deck => (
+                    <div
+                      key={deck.id}
+                      onClick={() => router.push(`/decks/${deck.id}`)}
+                      className="block group cursor-pointer"
+                    >
+                      <div className={`bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow h-${DECK_CARD_HEIGHT} flex flex-col`}>
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-slate-900 leading-tight">{deck.name}</h3>
+                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium ml-2 shrink-0">
+                            v{deck.current_version}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-500 mb-4 leading-relaxed line-clamp-3">{deck.description}</p>
+                        <div className="flex items-center justify-between mt-auto">
+                          <span className="text-xs text-slate-400">{adjustedDownloadCount(deck)} downloads</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDownload(deck); }}
+                            disabled={downloadingId === deck.id}
+                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors"
+                          >
+                            {downloadingId === deck.id ? 'Downloading...' : 'Download'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}

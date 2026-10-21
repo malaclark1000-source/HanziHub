@@ -4,18 +4,21 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { supabase, type Deck } from '../utils/supabase'
-import { CATEGORIES } from '@/lib/constants'
+import { supabase, type Deck, type DeckType } from '../utils/supabase'
+import { CATEGORIES, DECK_TYPES, deckTypeInfo } from '@/lib/constants'
 import { useAdminSession } from '@/lib/useAdminSession'
 import { AdminSignIn } from '@/components/admin/AdminSignIn'
 
 
-async function uploadToR2(file: File, deckName: string, accessToken: string, onStatus: (msg: string) => void): Promise<string> {
+// Value for a file input's `accept` attribute, e.g. ".apkg,.colpkg,.zip"
+const acceptFor = (deckType: DeckType) => deckTypeInfo(deckType).extensions.map(e => `.${e}`).join(',')
+
+async function uploadToR2(file: File, deckName: string, deckType: DeckType, accessToken: string, onStatus: (msg: string) => void): Promise<string> {
   onStatus('Requesting upload URL...')
   const res = await fetch('/api/r2-upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ filename: file.name, deckName }),
+    body: JSON.stringify({ filename: file.name, deckName, deckType }),
   })
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: undefined }))
@@ -37,6 +40,7 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
+  const [deckType, setDeckType] = useState<DeckType>('anki')
   const [version, setVersion] = useState('1.0')
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState('')
@@ -50,17 +54,17 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
     setError('')
     setLoading(true)
     try {
-      const fileUrl = await uploadToR2(file, name, accessToken, setStatus)
+      const fileUrl = await uploadToR2(file, name, deckType, accessToken, setStatus)
       setStatus('Creating deck record...')
       const res = await fetch('/api/admin/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ name, description, category, version, fileUrl }),
+        body: JSON.stringify({ name, description, category, version, fileUrl, deckType }),
       })
       const body = await res.json()
       if (!res.ok) throw new Error(body.error || 'Failed to create deck')
       setStatus('Deck created successfully!')
-      setName(''); setDescription(''); setCategory(''); setVersion('1.0'); setFile(null)
+      setName(''); setDescription(''); setCategory(''); setDeckType('anki'); setVersion('1.0'); setFile(null)
       if (fileRef.current) fileRef.current.value = ''
       onCreated()
       setTimeout(() => setStatus(''), 3000)
@@ -78,6 +82,23 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
       {status && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">{status}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Deck Type</label>
+          <div className="flex gap-2">
+            {DECK_TYPES.map(t => (
+              <button key={t.value} type="button"
+                onClick={() => {
+                  setDeckType(t.value)
+                  // A file picked for the other type would be rejected on upload
+                  setFile(null)
+                  if (fileRef.current) fileRef.current.value = ''
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${deckType === t.value ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Deck Name</label>
@@ -105,8 +126,8 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deck File (.apkg, .colpkg)</label>
-            <input ref={fileRef} type="file" accept=".apkg,.colpkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
+            <label className="block text-sm font-medium text-slate-700 mb-1">Deck File ({deckType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
+            <input ref={fileRef} type="file" accept={acceptFor(deckType)} onChange={e => setFile(e.target.files?.[0] || null)} required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
           </div>
         </div>
@@ -129,6 +150,9 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const selectedDeck = decks.find(d => d.id === selectedId)
+  const selectedType = deckTypeInfo(selectedDeck?.deck_type).value
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!file) { setError('Please select a file.'); return }
@@ -136,8 +160,7 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
     setError('')
     setLoading(true)
     try {
-      const selectedDeck = decks.find(d => d.id === selectedId)
-      const fileUrl = await uploadToR2(file, selectedDeck?.name || '', accessToken, setStatus)
+      const fileUrl = await uploadToR2(file, selectedDeck?.name || '', selectedType, accessToken, setStatus)
       setStatus('Updating deck...')
       const versionRes = await fetch('/api/admin/decks/version', {
         method: 'POST',
@@ -167,11 +190,16 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Select Deck</label>
-          <select value={selectedId} onChange={e => setSelectedId(e.target.value)} required
+          <select value={selectedId} required
+            onChange={e => {
+              setSelectedId(e.target.value)
+              setFile(null)
+              if (fileRef.current) fileRef.current.value = ''
+            }}
             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             <option value="">-- Select a deck --</option>
             {decks.map(d => (
-              <option key={d.id} value={d.id}>{d.name} (v{d.current_version})</option>
+              <option key={d.id} value={d.id}>[{deckTypeInfo(d.deck_type).label}] {d.name} (v{d.current_version})</option>
             ))}
           </select>
         </div>
@@ -182,8 +210,8 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">New File (.apkg, .colpkg)</label>
-            <input ref={fileRef} type="file" accept=".apkg,.colpkg,.zip" onChange={e => setFile(e.target.files?.[0] || null)} required
+            <label className="block text-sm font-medium text-slate-700 mb-1">New File ({selectedType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
+            <input ref={fileRef} type="file" accept={acceptFor(selectedType)} onChange={e => setFile(e.target.files?.[0] || null)} required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
           </div>
         </div>
@@ -293,6 +321,7 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-slate-900">{deck.name}</span>
                     <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">v{deck.current_version}</span>
+                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{deckTypeInfo(deck.deck_type).label}</span>
                     <span className="text-xs bg-slate-50 text-slate-500 px-2 py-0.5 rounded-full">{deck.category}</span>
                   </div>
                   <p className="text-sm text-slate-500 truncate">{deck.description}</p>

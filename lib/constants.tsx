@@ -8,5 +8,14 @@ export const CATEGORIES = [
     'Collection',
 ]
 
+// Deck types and the file extensions each one accepts on upload
+export const DECK_TYPES = [
+    { value: 'anki', label: 'Anki', extensions: ['apkg', 'colpkg', 'zip'] },
+    { value: 'pleco', label: 'Pleco', extensions: ['txt'] },
+] as const
+
+export const deckTypeInfo = (deckType: string | undefined) =>
+    DECK_TYPES.find(t => t.value === deckType) ?? DECK_TYPES[0]
+
 // UI constant
 export const DECK_CARD_HEIGHT = 52

@@ -3,13 +3,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NextResponse } from 'next/server'
 import { getVerifiedAdminEmail } from '@/lib/serverAuth'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
+import { DECK_TYPES } from '@/lib/constants'
 
-// Only Anki deck files are allowed (.apkg/.colpkg are zip archives). We check
+// Only deck files are allowed: Anki packages (.apkg/.colpkg are zip archives)
+// or Pleco plain-text lists (.txt), matched against the deck's type. We check
 // the extension rather than the browser-reported MIME type, which varies by
 // OS (e.g. Windows reports Anki's own type once Anki is installed). Every
 // file is stored as a generic binary download regardless, so nothing served
 // back from the public bucket can render in a browser (stored XSS via the CDN).
-const ALLOWED_EXTENSIONS = new Set(['apkg', 'colpkg', 'zip'])
 const CONTENT_TYPE = 'application/octet-stream'
 
 const R2_ENDPOINT = process.env.R2_ENDPOINT!
@@ -36,13 +37,18 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { filename, deckName } = await req.json()
+    const { filename, deckName, deckType } = await req.json()
     if (!filename) {
       return NextResponse.json({ error: 'filename is required' }, { status: 400 })
     }
+    const type = DECK_TYPES.find(t => t.value === deckType)
+    if (!type) {
+      return NextResponse.json({ error: 'Unknown deck type' }, { status: 400 })
+    }
     const ext = filename.includes('.') ? filename.split('.').pop()!.toLowerCase() : ''
-    if (!ALLOWED_EXTENSIONS.has(ext)) {
-      return NextResponse.json({ error: 'Unsupported file type (expected .apkg, .colpkg or .zip)' }, { status: 400 })
+    if (!(type.extensions as readonly string[]).includes(ext)) {
+      const expected = type.extensions.map(e => `.${e}`).join(', ')
+      return NextResponse.json({ error: `Unsupported file type for a ${type.label} deck (expected ${expected})` }, { status: 400 })
     }
     // Create a unique key using timestamp to avoid collisions
     const timestamp = Date.now()

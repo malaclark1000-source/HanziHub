@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getVerifiedAdminEmail } from '@/lib/serverAuth'
 import { createSupabaseServiceClient } from '@/lib/supabaseAdmin'
+import { DECK_TYPES } from '@/lib/constants'
 
 // Create a deck. Admin-only: the browser previously wrote to the `decks`
 // table directly with the public anon key, which meant the only thing
@@ -9,14 +10,17 @@ export async function POST(req: Request) {
   const admin = await getVerifiedAdminEmail(req)
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { name, description, category, version, fileUrl } = await req.json()
-  if (!name || !description || !category || !version || !fileUrl) {
+  const { name, description, category, version, fileUrl, deckType } = await req.json()
+  if (!name || !description || !category || !version || !fileUrl || !deckType) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+  if (!DECK_TYPES.some(t => t.value === deckType)) {
+    return NextResponse.json({ error: 'Unknown deck type' }, { status: 400 })
   }
 
   const supabase = createSupabaseServiceClient()
   const { error } = await supabase.from('decks').insert({
-    name, description, category, current_version: version, file_url: fileUrl, download_count: 0,
+    name, description, category, deck_type: deckType, current_version: version, file_url: fileUrl, download_count: 0,
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
