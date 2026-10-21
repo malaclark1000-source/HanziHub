@@ -27,12 +27,12 @@ const NAV_LINKS = [
 // - what page the user is currently on
 function HeaderLink({ linkRoute, linkName, isCurrentPage, isMobile }: { linkRoute: string, linkName: string, isCurrentPage: boolean; isMobile: boolean | undefined }) {
 
-    var classString = ""
+    let classString = ""
 
     if (isCurrentPage) {
-        classString = isMobile ? 'text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-medium whitespace-nowrap' : 'text-blue-600 font-medium'
+        classString = isMobile ? 'text-sm px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap' : 'text-blue-600 dark:text-blue-400 font-medium'
     } else {
-        classString = isMobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap' : 'text-slate-600 hover:text-slate-900'
+        classString = isMobile ? 'text-sm px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
     }
 
     return <Link href={`/${linkRoute}`} className={classString}>{linkName}</Link>
@@ -53,6 +53,6 @@ export function NavBar(currentPage: string, isAdmin: boolean, isMobile: boolean 
                 isMobile={isMobile}
             />
         ))}
-        {isAdmin && <Link href="/admin" className={isMobile ? 'text-sm px-3 py-1.5 rounded-lg text-purple-600 hover:bg-purple-50 font-medium whitespace-nowrap' : 'text-purple-600 hover:text-purple-700 font-medium'}>Admin</Link>}
+        {isAdmin && <Link href="/admin" className={isMobile ? 'text-sm px-3 py-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950 font-medium whitespace-nowrap' : 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium'}>Admin</Link>}
     </>
 }

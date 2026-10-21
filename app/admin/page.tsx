@@ -77,13 +77,13 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Create New Deck</h2>
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
-      {status && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">{status}</div>}
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Create New Deck</h2>
+      {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300 text-sm">{error}</div>}
+      {status && <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg text-blue-700 dark:text-blue-300 text-sm">{status}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Deck Type</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deck Type</label>
           <div className="flex gap-2">
             {DECK_TYPES.map(t => (
               <button key={t.value} type="button"
@@ -93,7 +93,7 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
                   setFile(null)
                   if (fileRef.current) fileRef.current.value = ''
                 }}
-                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${deckType === t.value ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}>
+                className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${deckType === t.value ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                 {t.label}
               </button>
             ))}
@@ -101,34 +101,34 @@ function CreateDeckForm({ accessToken, onCreated }: { accessToken: string; onCre
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deck Name</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deck Name</label>
             <input value={name} onChange={e => setName(e.target.value)} required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
             <select value={category} onChange={e => setCategory(e.target.value)} required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900">
               <option value="">-- Select a category --</option>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
           <textarea value={description} onChange={e => setDescription(e.target.value)} required rows={2}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Version</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Version</label>
             <input value={version} onChange={e => setVersion(e.target.value)} required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Deck File ({deckType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deck File ({deckType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
             <input ref={fileRef} type="file" accept={acceptFor(deckType)} onChange={e => setFile(e.target.files?.[0] || null)} required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200" />
           </div>
         </div>
         <button type="submit" disabled={loading}
@@ -183,20 +183,20 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Update Existing Deck</h2>
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
-      {status && <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">{status}</div>}
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Update Existing Deck</h2>
+      {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300 text-sm">{error}</div>}
+      {status && <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg text-blue-700 dark:text-blue-300 text-sm">{status}</div>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Select Deck</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Deck</label>
           <select value={selectedId} required
             onChange={e => {
               setSelectedId(e.target.value)
               setFile(null)
               if (fileRef.current) fileRef.current.value = ''
             }}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900">
             <option value="">-- Select a deck --</option>
             {decks.map(d => (
               <option key={d.id} value={d.id}>[{deckTypeInfo(d.deck_type).label}] {d.name} (v{d.current_version})</option>
@@ -205,21 +205,21 @@ function UpdateDeckForm({ decks, accessToken, onUpdated }: { decks: Deck[]; acce
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">New Version</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Version</label>
             <input value={version} onChange={e => setVersion(e.target.value)} required placeholder="e.g. 1.1"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">New File ({selectedType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New File ({selectedType === 'pleco' ? '.txt' : '.apkg, .colpkg'})</label>
             <input ref={fileRef} type="file" accept={acceptFor(selectedType)} onChange={e => setFile(e.target.files?.[0] || null)} required
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 file:text-slate-700" />
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-slate-100 dark:file:bg-slate-800 file:text-slate-700 dark:file:text-slate-200" />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Changelog</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Changelog</label>
           <textarea value={changelog} onChange={e => setChangelog(e.target.value)} rows={2}
             placeholder="What changed in this version?"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
         </div>
         <button type="submit" disabled={loading}
           className="px-6 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-lg transition-colors">
@@ -287,20 +287,20 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Manage Decks ({decks.length})</h2>
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Manage Decks ({decks.length})</h2>
+      {error && <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-300 text-sm">{error}</div>}
       <div className="space-y-3">
         {decks.map(deck => (
-          <div key={deck.id} className="border border-slate-200 rounded-lg p-4">
+          <div key={deck.id} className="border border-slate-200 dark:border-slate-800 rounded-lg p-4">
             {editingId === deck.id ? (
               <div className="space-y-3">
                 <input value={editName} onChange={e => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium" />
                 <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={2}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm" />
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm" />
                 <select value={editCategory} onChange={e => setEditCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-900 text-sm">
                   <option value="">-- Select a category --</option>
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -310,7 +310,7 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
                     {saving ? 'Saving...' : 'Save'}
                   </button>
                   <button onClick={() => setEditingId(null)}
-                    className="px-4 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-sm rounded-lg transition-colors">
+                    className="px-4 py-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-sm rounded-lg transition-colors">
                     Cancel
                   </button>
                 </div>
@@ -319,17 +319,17 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-slate-900">{deck.name}</span>
-                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">v{deck.current_version}</span>
-                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{deckTypeInfo(deck.deck_type).label}</span>
-                    <span className="text-xs bg-slate-50 text-slate-500 px-2 py-0.5 rounded-full">{deck.category}</span>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{deck.name}</span>
+                    <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">v{deck.current_version}</span>
+                    <span className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">{deckTypeInfo(deck.deck_type).label}</span>
+                    <span className="text-xs bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">{deck.category}</span>
                   </div>
-                  <p className="text-sm text-slate-500 truncate">{deck.description}</p>
-                  <p className="text-xs text-slate-400 mt-1">{deck.download_count} downloads</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{deck.description}</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{deck.download_count} downloads</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => startEdit(deck)}
-                    className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                    className="px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                     Edit
                   </button>
                   <button
@@ -337,7 +337,7 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
                       if (confirm(`Delete "${deck.name}"? This cannot be undone.`)) handleDelete(deck.id)
                     }}
                     disabled={deletingId === deck.id}
-                    className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 rounded-lg transition-colors">
+                    className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50 rounded-lg transition-colors">
                     {deletingId === deck.id ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
@@ -346,7 +346,7 @@ function DeckList({ decks, accessToken, onRefresh }: { decks: Deck[]; accessToke
           </div>
         ))}
         {decks.length === 0 && (
-          <p className="text-slate-500 text-sm text-center py-4">No decks yet.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">No decks yet.</p>
         )}
       </div>
     </div>
@@ -370,11 +370,11 @@ export default function AdminPage() {
 
   if (session === null) return <AdminSignIn />
 
-  if (!accessToken || isAdmin === null) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading...</div>
+  if (!accessToken || isAdmin === null) return <div className="flex min-h-screen items-center justify-center text-slate-500 dark:text-slate-400">Loading...</div>
 
   const signOutButton = (
     <button onClick={() => supabase.auth.signOut()}
-      className="text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+      className="text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
       Sign out
     </button>
   )
@@ -382,10 +382,10 @@ export default function AdminPage() {
   if (!isAdmin) return (
     <div className="flex justify-center px-4 py-16">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Access Denied</h1>
-        <p className="text-slate-500 mb-4">You don&apos;t have permission to access the admin panel.</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Access Denied</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-4">You don&apos;t have permission to access the admin panel.</p>
         <div className="flex items-center justify-center gap-3">
-          <Link href="/decks" className="text-blue-600 hover:text-blue-700 font-medium">Back to Decks</Link>
+          <Link href="/decks" className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">Back to Decks</Link>
           {signOutButton}
         </div>
       </div>
@@ -393,10 +393,10 @@ export default function AdminPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Admin Panel</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Panel</h1>
           {signOutButton}
         </div>
         <CreateDeckForm accessToken={accessToken} onCreated={loadDecks} />

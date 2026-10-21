@@ -1,4 +1,11 @@
+import { Metadata } from 'next'
 import { TutorialTabs } from '@/components/tutorials/TutorialTabs'
+import { BUG_REPORT_URL, CONTACT_EMAIL } from '@/lib/constants'
+
+export const metadata: Metadata = {
+  title: 'Pleco Tutorial',
+  description: 'How to import a Hanzi Hub Pleco deck into Pleco, with the recommended import settings.',
+}
 
 // Recommended Pleco import settings. `changed` marks settings that likely
 // differ from Pleco's defaults.
@@ -30,14 +37,14 @@ const IMPORT_SETTINGS = [
 
 function Step({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-5">
+    <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
       <div className="flex items-start gap-4">
         <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center">
           {number}
         </span>
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-slate-800 mb-2">{title}</h2>
-          <div className="text-slate-700 text-sm leading-relaxed space-y-3">{children}</div>
+          <h2 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">{title}</h2>
+          <div className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed space-y-3">{children}</div>
         </div>
       </div>
     </section>
@@ -47,13 +54,13 @@ function Step({ number, title, children }: { number: number; title: string; chil
 export default function PlecoTutorialPage() {
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <main className="max-w-3xl mx-auto px-4 py-10">
         <TutorialTabs current="/tutorials/pleco" />
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">Pleco Tutorial</h1>
-        <p className="text-slate-500 mb-8">How to import a Hanzi Hub Pleco deck (.txt) into Pleco&apos;s flashcards, step by step.</p>
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Pleco Tutorial</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-8">How to import a Hanzi Hub Pleco deck (.txt) into Pleco&apos;s flashcards, step by step.</p>
 
-        <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900 leading-relaxed">
+        <div className="mb-8 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-lg text-sm text-amber-900 dark:text-amber-100 leading-relaxed">
           <p className="font-semibold mb-1">Read this before importing</p>
           <p>
             The Semester 1, 2 and 3 flashcard definitions are imported from the curriculum glossaries. Use the settings in Step 4 so your flashcards exactly match the definitions given in the curriculum.
@@ -87,21 +94,21 @@ export default function PlecoTutorialPage() {
           </Step>
 
           <Step number={4} title="Use the recommended import settings">
-            <p>Before you tap Import, set the options on the import screen as follows. Settings marked <span className="font-semibold text-blue-700">*</span> are likely different from Pleco&apos;s defaults, so double-check those.</p>
+            <p>Before you tap Import, set the options on the import screen as follows. Settings marked <span className="font-semibold text-blue-700 dark:text-blue-300">*</span> are likely different from Pleco&apos;s defaults, so double-check those.</p>
             <div className="space-y-4">
               {IMPORT_SETTINGS.map(group => (
                 <div key={group.group}>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{group.group}</p>
-                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{group.group}</p>
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800">
                     {group.settings.map(s => (
                       <div key={s.name} className="px-4 py-2">
                         <div className="flex items-center justify-between gap-4">
-                          <span className="text-slate-600">{s.name}</span>
-                          <span className="font-semibold text-slate-900 text-right">
-                            {s.value}{s.changed && <span className="text-blue-700">*</span>}
+                          <span className="text-slate-600 dark:text-slate-300">{s.name}</span>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100 text-right">
+                            {s.value}{s.changed && <span className="text-blue-700 dark:text-blue-300">*</span>}
                           </span>
                         </div>
-                        {s.note && <p className="text-xs text-slate-500 mt-1">{s.note}</p>}
+                        {s.note && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s.note}</p>}
                       </div>
                     ))}
                   </div>
@@ -123,9 +130,10 @@ export default function PlecoTutorialPage() {
           </Step>
         </div>
 
-        <p className="mt-8 text-sm text-slate-500 text-center">
-          This tutorial is maintained by Hanzi Hub. If something has changed in a recent Pleco update or you spot an error, use the &quot;Report a Bug&quot; feature at the top of the page or send an email to{' '}
-          <a href="mailto:malaclark1000@gmail.com" className="text-blue-600 hover:underline">malaclark1000@gmail.com</a>.
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400 text-center">
+          This tutorial is maintained by Hanzi Hub. If something has changed in a recent Pleco update or you spot an error,{' '}
+          <a href={BUG_REPORT_URL} className="text-blue-600 dark:text-blue-400 hover:underline">report it</a> using the link at the top of the page or email{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 dark:text-blue-400 hover:underline">{CONTACT_EMAIL}</a>.
         </p>
       </main>
     </div>

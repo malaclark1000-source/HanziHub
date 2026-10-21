@@ -3,8 +3,9 @@
 export const dynamic = 'force-dynamic'
 
 import { YouTubeEmbed } from '@next/third-parties/google'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TutorialTabs } from '@/components/tutorials/TutorialTabs'
+import { BUG_REPORT_URL, CONTACT_EMAIL } from '@/lib/constants'
 
 const sections = [
   {
@@ -174,10 +175,10 @@ const sections = [
           <p className="font-semibold">The 4 Buttons</p>
           <p>After flipping a card, you rate yourself with one of four buttons:</p>
           <ul className="list-none space-y-2 mt-2">
-            <li><span className="font-semibold text-red-600">Again</span> — You didn't remember it, or you got something wrong (wrong tone, wrong meaning, wrong pronunciation). This resets the card back to the beginning of the learning process and puts it in your current session's review queue so you see it again shortly.</li>
+            <li><span className="font-semibold text-red-600 dark:text-red-400">Again</span> — You didn't remember it, or you got something wrong (wrong tone, wrong meaning, wrong pronunciation). This resets the card back to the beginning of the learning process and puts it in your current session's review queue so you see it again shortly.</li>
             <li><span className="font-semibold text-orange-500">Hard</span> — You remembered it, but it was a real struggle. Anki shortens the next interval compared to what it would have been.</li>
-            <li><span className="font-semibold text-green-600">Good</span> — You remembered it comfortably. Anki advances the card on its normal schedule. This is your default button for solid recall.</li>
-            <li><span className="font-semibold text-blue-600">Easy</span> — You knew it instantly without any effort. Anki pushes the next interval out significantly further than normal. Use this sparingly.</li>
+            <li><span className="font-semibold text-green-600 dark:text-green-400">Good</span> — You remembered it comfortably. Anki advances the card on its normal schedule. This is your default button for solid recall.</li>
+            <li><span className="font-semibold text-blue-600 dark:text-blue-400">Easy</span> — You knew it instantly without any effort. Anki pushes the next interval out significantly further than normal. Use this sparingly.</li>
           </ul>
         </div>
         <div>
@@ -355,15 +356,15 @@ const sections = [
           <ul className="list-none space-y-3 mt-2">
             <li>
               <p className="font-medium">Review Heatmap</p>
-              <p>Adds a GitHub-style heatmap to your main screen showing your review activity over time. Incredibly motivating — seeing your streak visualized makes you want to keep it alive. AnkiWeb code: <span className="font-mono bg-slate-100 px-1 rounded">1771074083</span>.</p>
+              <p>Adds a GitHub-style heatmap to your main screen showing your review activity over time. Incredibly motivating — seeing your streak visualized makes you want to keep it alive. AnkiWeb code: <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">1771074083</span>.</p>
             </li>
             <li>
               <p className="font-medium">More Overview Stats 21</p>
-              <p>Adds detailed statistics to your deck overview screen: forecasted reviews, true retention rate, card maturity breakdown. Helps you understand whether your studying is actually working. AnkiWeb code: <span className="font-mono bg-slate-100 px-1 rounded">2091361802</span>.</p>
+              <p>Adds detailed statistics to your deck overview screen: forecasted reviews, true retention rate, card maturity breakdown. Helps you understand whether your studying is actually working. AnkiWeb code: <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">2091361802</span>.</p>
             </li>
             <li>
               <p className="font-medium">Button Colors Good Again</p>
-              <p>Colors the Again button red and the Good button green, making it faster and more intuitive to rate cards correctly without looking at labels. Small change, meaningfully better UX. AnkiWeb code: <span className="font-mono bg-slate-100 px-1 rounded">2494384865</span>.</p>
+              <p>Colors the Again button red and the Good button green, making it faster and more intuitive to rate cards correctly without looking at labels. Small change, meaningfully better UX. AnkiWeb code: <span className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">2494384865</span>.</p>
             </li>
           </ul>
           <p className="mt-3">These three add-ons are lightweight, stable, and genuinely useful. Start here before exploring anything else. The add-on ecosystem is large and some older add-ons break after Anki updates — stick to well-reviewed, recently-updated options.</p>
@@ -373,22 +374,26 @@ const sections = [
   },
 ]
 
-function Accordion({ title, content }: { title: string; content: React.ReactNode }) {
-  const [open, setOpen] = useState(false)
+// URL fragment for a section, e.g. "7. Deck Settings — What..." -> "deck-settings-what-to-configure..."
+const sectionId = (title: string) =>
+  title.replace(/^\d+\.\s*/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+function Accordion({ id, title, content, open, onToggle }: { id?: string; title: string; content: React.ReactNode; open: boolean; onToggle: () => void }) {
 
   return (
-    <div className="border border-slate-200 rounded-lg overflow-hidden">
+    <div id={id} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden scroll-mt-24">
       <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 transition-colors text-left"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between px-5 py-4 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
       >
-        <span className="font-semibold text-slate-800">{title}</span>
-        <span className={`ml-4 flex-shrink-0 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+        <span className="font-semibold text-slate-800 dark:text-slate-100">{title}</span>
+        <span className={`ml-4 flex-shrink-0 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
           ▾
         </span>
       </button>
       {open && (
-        <div className="px-5 py-4 bg-white border-t border-slate-100 text-slate-700 text-sm leading-relaxed">
+        <div className="px-5 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
           {content}
         </div>
       )}
@@ -398,18 +403,45 @@ function Accordion({ title, content }: { title: string; content: React.ReactNode
 
 export default function TutorialsPage() {
 
+  const [videoOpen, setVideoOpen] = useState(false)
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set())
+  const allOpen = openIds.size === sections.length
+
+  // Open (and scroll to) the section named in the URL, e.g. /tutorials#deck-settings-...
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1))
+    if (!sections.some(s => sectionId(s.title) === id)) return
+    // The hash only exists in the browser, so it can't seed the initial state
+    // without a hydration mismatch
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpenIds(new Set([id]))
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView())
+  }, [])
+
+  function toggle(id: string) {
+    const next = new Set(openIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+      // Keep the URL pointing at the last opened section so it can be shared
+      history.replaceState(null, '', `#${id}`)
+    }
+    setOpenIds(next)
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <main className="max-w-3xl mx-auto px-4 py-10">
         <TutorialTabs current="/tutorials" />
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">Anki Tutorial</h1>
-        <p className="text-slate-500 mb-8">A complete guide for DLI Mandarin students. Click any section to expand it.</p>
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">Anki Tutorial</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-8">A complete guide for DLI Mandarin students. Click any section to expand it.</p>
 
         {/* --- NEW VIDEO SECTION --- */}
         <div className="mb-10 space-y-6">
           {/* Direct embed video */}
           <div>
-            <h2 className="text-xl font-semibold text-slate-700 mb-3">Introduction to Anki</h2>
+            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-3">Introduction to Anki</h2>
             <div className="aspect-video rounded-lg overflow-hidden shadow-md">
               <YouTubeEmbed videoid="wF6UrwQ_uns" height={400} />
             </div>
@@ -418,6 +450,8 @@ export default function TutorialsPage() {
           {/* Second video inside accordion */}
           <Accordion
             title="🎥 Advanced Video Tutorial"
+            open={videoOpen}
+            onToggle={() => setVideoOpen(!videoOpen)}
             content={
               <div className="aspect-video rounded-lg overflow-hidden">
                 <YouTubeEmbed videoid="l1v1TqRTUUE" height={400} />
@@ -429,14 +463,27 @@ export default function TutorialsPage() {
 
         <div className="space-y-3">
 
-          <h2 className="text-xl font-semibold text-slate-700 mb-3">Article tutorials</h2>
-          {sections.map((section) => (
-            <Accordion key={section.title} title={section.title} content={section.content} />
-          ))}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300">Article tutorials</h2>
+            <button
+              onClick={() => setOpenIds(allOpen ? new Set() : new Set(sections.map(s => sectionId(s.title))))}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+            >
+              {allOpen ? 'Collapse all' : 'Expand all'}
+            </button>
+          </div>
+          {sections.map((section) => {
+            const id = sectionId(section.title)
+            return (
+              <Accordion key={id} id={id} title={section.title} content={section.content}
+                open={openIds.has(id)} onToggle={() => toggle(id)} />
+            )
+          })}
         </div>
-        <p className="mt-8 text-sm text-slate-500 text-center">
-          This tutorial is maintained by Hanzi Hub. If something has changed in a recent Anki update or you spot an error, use the "Report a Bug" feature at the top of the page or send an email to{' '}
-          <a href="mailto:malaclark1000@gmail.com" className="text-blue-600 hover:underline">malaclark1000@gmail.com</a>.
+        <p className="mt-8 text-sm text-slate-500 dark:text-slate-400 text-center">
+          This tutorial is maintained by Hanzi Hub. If something has changed in a recent Anki update or you spot an error,{' '}
+          <a href={BUG_REPORT_URL} className="text-blue-600 dark:text-blue-400 hover:underline">report it</a> using the link at the top of the page or email{' '}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 dark:text-blue-400 hover:underline">{CONTACT_EMAIL}</a>.
         </p>
       </main>
     </div>
