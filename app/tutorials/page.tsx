@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { YouTubeEmbed } from '@next/third-parties/google'
 import { useState } from 'react'
+import { TutorialTabs } from '@/components/tutorials/TutorialTabs'
 
 const sections = [
   {
@@ -400,6 +401,7 @@ export default function TutorialsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <main className="max-w-3xl mx-auto px-4 py-10">
+        <TutorialTabs current="/tutorials" />
         <h1 className="text-3xl font-bold text-slate-800 mb-2">Anki Tutorial</h1>
         <p className="text-slate-500 mb-8">A complete guide for DLI Mandarin students. Click any section to expand it.</p>
 

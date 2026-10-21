@@ -1,6 +1,6 @@
 // Common utility functions used throughout the application
 
-import { Deck } from "@/app/utils/supabase"
+import { Deck, DeckType } from "@/app/utils/supabase"
 import { HANZI_HUB_STARTER_PACK_ID } from "./constants"
 
 export const isStarterPack = (d: Deck) => {
@@ -8,21 +8,24 @@ export const isStarterPack = (d: Deck) => {
 }
 
 // Remembers (per browser) whether a visitor has already been shown the
-// "New to Anki?" prompt. Storage can be unavailable (private mode, blocked
-// site data), in which case we fail open and simply don't show the prompt.
-const TUTORIAL_PROMPT_KEY = "hanzihub:tutorial-prompt-seen"
+// "New to Anki?" / "New to Pleco?" prompt for a deck type. Storage can be
+// unavailable (private mode, blocked site data), in which case we fail open
+// and simply don't show the prompt.
+// The Anki key predates Pleco decks; it's kept so returning visitors aren't re-prompted.
+const tutorialPromptKey = (deckType: DeckType) =>
+    deckType === "anki" ? "hanzihub:tutorial-prompt-seen" : `hanzihub:${deckType}-tutorial-prompt-seen`
 
-export const hasSeenTutorialPrompt = () => {
+export const hasSeenTutorialPrompt = (deckType: DeckType) => {
     try {
-        return localStorage.getItem(TUTORIAL_PROMPT_KEY) !== null
+        return localStorage.getItem(tutorialPromptKey(deckType)) !== null
     } catch {
         return true
     }
 }
 
-export const markTutorialPromptSeen = () => {
+export const markTutorialPromptSeen = (deckType: DeckType) => {
     try {
-        localStorage.setItem(TUTORIAL_PROMPT_KEY, "1")
+        localStorage.setItem(tutorialPromptKey(deckType), "1")
     } catch {
         // Storage unavailable; nothing to persist.
     }

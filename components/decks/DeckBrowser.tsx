@@ -55,9 +55,9 @@ export function DeckBrowser({ deckType }: { deckType: DeckType }) {
     init()
   }, [router])
 
-  // First-time visitors are pointed at the Anki tutorial before their first Anki download
+  // First-time visitors are pointed at the matching tutorial before their first download
   function handleDownload(deck: Deck) {
-    if (isAnki && !hasSeenTutorialPrompt()) {
+    if (!hasSeenTutorialPrompt(deckType)) {
       setPendingDeck(deck)
       setShowTutorialPrompt(true)
       return
@@ -68,7 +68,7 @@ export function DeckBrowser({ deckType }: { deckType: DeckType }) {
   async function proceedWithDownload(deck: Deck) {
     setShowTutorialPrompt(false)
     setPendingDeck(null)
-    if (isAnki) markTutorialPromptSeen()
+    markTutorialPromptSeen(deckType)
 
     setDownloadingId(deck.id)
     // Trigger download immediately in the click context — before any awaits
@@ -100,6 +100,7 @@ export function DeckBrowser({ deckType }: { deckType: DeckType }) {
     <div className="min-h-screen bg-slate-50">
       {showTutorialPrompt && pendingDeck && (
         <NewUserModal
+          deckType={deckType}
           onClick={() => proceedWithDownload(pendingDeck)}
           onClose={() => setShowTutorialPrompt(false)}
         />
